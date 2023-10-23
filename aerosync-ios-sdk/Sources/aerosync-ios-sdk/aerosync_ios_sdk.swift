@@ -4,7 +4,7 @@
 import SwiftUI
 import WebKit
 
-var environments = ["dev": "10.201.37.246:8080/",
+var environments = ["dev": "dev.aerosync.com",
                     "staging": "staging.aerosync.com",
                     "production": "www.aerosync.com"]
 
