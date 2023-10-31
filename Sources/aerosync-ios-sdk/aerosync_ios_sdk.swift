@@ -4,9 +4,9 @@
 import SwiftUI
 import WebKit
 
-var environments = ["dev": "dev.aerosync.com",
-                    "staging": "staging.aerosync.com",
-                    "production": "www.aerosync.com"]
+var environments = ["dev": "dev.aerosync.com/",
+                    "staging": "staging.aerosync.com/",
+                    "production": "www.aerosync.com/"]
 
 #if os(iOS)
 @available(iOS 14.0, *)
