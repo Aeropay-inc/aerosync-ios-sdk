@@ -102,7 +102,7 @@ public struct AerosyncSDK: UIViewRepresentable{
                 wrapper.shouldDismiss = true
                 wrapper.onSuccess(messageBody)
             }
-            if message.name == "onClose", let messageBody = message.body as? String {
+            if message.name == "onClose", let messageBody = message.body as? Any {
                 print("Received message from the web: OnClose \(messageBody)")
                 wrapper.shouldDismiss = true
                 wrapper.onClose("Closed")
