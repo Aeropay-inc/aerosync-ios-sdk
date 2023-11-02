@@ -60,9 +60,6 @@ public struct AerosyncSDK: UIViewRepresentable{
     
     public func updateUIView(_ uiView: WKWebView, context: Context) {
         
-        // capture oauth here???
-        print("https://\(environments[env]!)?token=\(token!)&deeplink=\(deeplink!)\(consumerId != nil ? "&consumerId=\(consumerId!)" : "")")
-        
         guard !shouldDismiss || !context.environment.presentationMode.wrappedValue.isPresented else {
                context.environment.presentationMode.wrappedValue.dismiss()
                return
@@ -89,28 +86,27 @@ public struct AerosyncSDK: UIViewRepresentable{
         
         public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
             if message.name == "onError", let messageBody = message.body as? String {
-                print("Received message from the web: OnError \(messageBody)")
+                //print("Received message from the web: OnError \(messageBody)")
                 wrapper.onError(messageBody)
             }
             if message.name == "onEvent", let messageBody = message.body as? String {
-                print("Received message from the web: OnEvent \(messageBody)")
+                //print("Received message from the web: OnEvent \(messageBody)")
                 wrapper.onEvent(messageBody)
     
             }
             if message.name == "onSuccess", let messageBody = message.body as? Any {
-                print("Received message from the web: OnSuccess \(messageBody)")
+                //print("Received message from the web: OnSuccess \(messageBody)")
                 wrapper.shouldDismiss = true
                 wrapper.onSuccess(messageBody)
             }
             if message.name == "onClose", let messageBody = message.body as? Any {
-                print("Received message from the web: OnClose \(messageBody)")
+                //print("Received message from the web: OnClose \(messageBody)")
                 wrapper.shouldDismiss = true
                 wrapper.onClose("Closed")
             }
         }
         
         public func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
-            print("UPDATING VIEW2:")
             decisionHandler(.allow)
         }
         
@@ -119,7 +115,6 @@ public struct AerosyncSDK: UIViewRepresentable{
         }
         
         public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-            print(navigationAction.request.url?.absoluteString)
            let urlToMatch = "https://workshop.appcoda.com/"
            if let urlStr = navigationAction.request.url?.absoluteString, urlStr == urlToMatch {
                //
@@ -127,7 +122,6 @@ public struct AerosyncSDK: UIViewRepresentable{
            decisionHandler(.allow)
        }
         public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-            print("NEW WINDOW\(navigationAction.request.url?.absoluteString)")
             if let url = navigationAction.request.url {
                 if navigationAction.targetFrame == nil {
                     if UIApplication.shared.canOpenURL(url) {
