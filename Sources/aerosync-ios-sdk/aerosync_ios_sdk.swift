@@ -114,13 +114,6 @@ public struct AerosyncSDK: UIViewRepresentable{
             wrapper.onLoad("\(webView.url!)")
         }
         
-        public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-           let urlToMatch = "https://workshop.appcoda.com/"
-           if let urlStr = navigationAction.request.url?.absoluteString, urlStr == urlToMatch {
-               //
-           }
-           decisionHandler(.allow)
-       }
         public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
             if let url = navigationAction.request.url {
                 if navigationAction.targetFrame == nil {
