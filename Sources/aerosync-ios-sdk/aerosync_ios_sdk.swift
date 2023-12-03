@@ -14,7 +14,7 @@ public struct AerosyncSDK: UIViewRepresentable{
     @State fileprivate var shouldDismiss = false
     
     var token: String? = nil
-    var env: String = ""
+    var env: String? = nil
     var deeplink: String? = nil
     var consumerId: String?
     var onEvent : (Any) -> ()
@@ -65,7 +65,7 @@ public struct AerosyncSDK: UIViewRepresentable{
                return
           }
         
-        let url = URL(string:"https://\(environments[env]!)?token=\(token!)&deeplink=\(deeplink!)\(consumerId != nil ? "&consumerId=\(consumerId!)" : "")")
+        let url = URL(string:"https://\(environments[env!]!)?token=\(token!)&deeplink=\(deeplink!)\(consumerId != nil ? "&consumerId=\(consumerId!)" : "")")
         guard let myURL = url else {
             return
         }
@@ -112,6 +112,17 @@ public struct AerosyncSDK: UIViewRepresentable{
         
         public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             wrapper.onLoad("\(webView.url!)")
+            let triggerEventScript = """
+                var event = new CustomEvent('iOSReady', { detail: 'iOS Ready' });
+                window.dispatchEvent(event);
+            """
+            webView.evaluateJavaScript(triggerEventScript) { (result, error) in
+                if let error = error {
+                    print("Error triggering event: \(error)")
+                } else {
+                    print("Event triggered successfully")
+                }
+            }
         }
         
         public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
