@@ -18,12 +18,12 @@ public struct AerosyncSDK: UIViewRepresentable{
     var deeplink: String? = nil
     var consumerId: String?
     var onEvent : (Any) -> ()
-    var onSuccess : (Any) -> ()
+    var onSuccess : (String) -> ()
     var onClose : (Any) -> ()
     var onLoad : (Any) -> ()
     var onError : (Any) -> ()
     
-    public init(shouldDismiss: Bool = false, token: String? = nil, env: String, deeplink: String? = nil, consumerId: String? = nil, onEvent: @escaping (Any) -> Void, onSuccess: @escaping (Any) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void) {
+    public init(shouldDismiss: Bool = false, token: String? = nil, env: String, deeplink: String? = nil, consumerId: String? = nil, onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void) {
         self.shouldDismiss = shouldDismiss
         self.token = token
         self.env = env
@@ -94,7 +94,7 @@ public struct AerosyncSDK: UIViewRepresentable{
                 wrapper.onEvent(messageBody)
     
             }
-            if message.name == "onSuccess", let messageBody = message.body as? Any {
+            if message.name == "onSuccess", let messageBody = message.body as? String {
                 //print("Received message from the web: OnSuccess \(messageBody)")
                 wrapper.shouldDismiss = true
                 wrapper.onSuccess(messageBody)
