@@ -55,6 +55,10 @@ public struct AerosyncSDK: UIViewRepresentable{
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onEvent")
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onError")
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onSuccess")
+        let url = URL(string:"https://\(environments[env!]!)?token=\(token!)&deeplink=\(deeplink!)\(consumerId != nil ? "&consumerId=\(consumerId!)" : "")")
+
+        let request = URLRequest(url: url!)
+        webView.load(request)
         return webView
     }
     
@@ -64,13 +68,6 @@ public struct AerosyncSDK: UIViewRepresentable{
                context.environment.presentationMode.wrappedValue.dismiss()
                return
           }
-        
-        let url = URL(string:"https://\(environments[env!]!)?token=\(token!)&deeplink=\(deeplink!)\(consumerId != nil ? "&consumerId=\(consumerId!)" : "")")
-        guard let myURL = url else {
-            return
-        }
-        let request = URLRequest(url: myURL)
-        uiView.load(request)
     }
     
     public func makeCoordinator() -> Coordinator {
