@@ -30,7 +30,7 @@ struct AerosyncWidgetView : View {
     var body: some View{
         NavigationStack{
             NavigationLink{
-                AerosyncSDK(token: "...", env: "dev", deeplink: "aerosync://connect", onEvent: self.onEvent, onSuccess: self.onSuccess, onClose: self.onClose, onLoad: self.onLoad, onError: self.onError)
+                AerosyncSDK(token: "...", env: "staging", deeplink: "aerosync://connect", onEvent: self.onEvent, onSuccess: self.onSuccess, onClose: self.onClose, onLoad: self.onLoad, onError: self.onError)
                 
             } label: {
                 VStack {
@@ -72,7 +72,7 @@ Each callback returns a String message that comes back from the widget based on 
 
 | Parameter   | Type                 | Description                                                                                                                                           |
 | :---------- | :------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `env`       | `string`             | **Required**. Available values: dev, staging, production.                                                                                             |
+| `env`       | `string`             | **Required**. Available values: staging, production.                                                                                             |
 | `token`     | `string`             | **Required**. The token generated from the [integration guide](https://api-aeropay.readme.io/docs/aerosync-implementation-guides).                    |
 | `onEvent`   | `function(response)` | **Required**. This method will be triggered as the user completes the bank link workflow.                                                             |
 | `onLoad`    | `function(response)` | **Required**. Call function after the contents of webpage have been loaded as the user completes the bank link workflow.                              |
