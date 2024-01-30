@@ -12,17 +12,20 @@ var environments = ["staging": "staging.aerosync.com/",
 public struct AerosyncSDK: UIViewRepresentable{
     @State fileprivate var shouldDismiss = false
     
-    var token: String? = nil
-    var env: String? = nil
-    var deeplink: String? = nil
+    var token: String
+    var env: String
+    var deeplink: String
     var consumerId: String?
     var onEvent : (Any) -> ()
     var onSuccess : (String) -> ()
     var onClose : (Any) -> ()
     var onLoad : (Any) -> ()
     var onError : (Any) -> ()
+    var handleMFA : Bool
+    var userId: String?
+    var jobId: String?
     
-    public init(shouldDismiss: Bool = false, token: String? = nil, env: String, deeplink: String? = nil, consumerId: String? = nil, onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void) {
+    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, consumerId: String? = nil, onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void, handleMFA: Bool = false, jobId: String? = "", userId: String? = "") {
         self.shouldDismiss = shouldDismiss
         self.token = token
         self.env = env
@@ -33,13 +36,15 @@ public struct AerosyncSDK: UIViewRepresentable{
         self.onClose = onClose
         self.onLoad = onLoad
         self.onError = onError
+        self.handleMFA = handleMFA
+        self.jobId = jobId
+        self.userId = userId
     }
     
     public func makeUIView(context: Context) -> WKWebView {
         let prefs = WKWebpagePreferences()
         prefs.allowsContentJavaScript = true
         let config = WKWebViewConfiguration()
-        config.userContentController.add(Coordinator(wrapper: self), name: "onClose")
         
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
@@ -48,13 +53,31 @@ public struct AerosyncSDK: UIViewRepresentable{
         let source = "function captureLog(msg) { window.webkit.messageHandlers.logHandler.postMessage(msg); } window.console.log = captureLog;"
         let script = WKUserScript(source: source, injectionTime: .atDocumentEnd, forMainFrameOnly: false)
         webView.configuration.userContentController.addUserScript(script)
+        
         // register the bridge script that listens for the output
         webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
+        webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onClose")
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "logHandler")
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onEvent")
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onError")
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onSuccess")
-        let url = URL(string:"https://\(environments[env!]!)?token=\(token!)&deeplink=\(deeplink!)\(consumerId != nil ? "&consumerId=\(consumerId!)" : "")")
+        context.coordinator.webView = webView
+
+        // SETUP GESTURE RECOGNIZER
+        let gestureRecognizerBack = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(context.coordinator.handleBack))
+        gestureRecognizerBack.direction = .right // back navigation
+        gestureRecognizerBack.delegate = context.coordinator
+        webView.addGestureRecognizer(gestureRecognizerBack)
+        
+        let gestureRecognizerForward = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(context.coordinator.handleForward))
+        gestureRecognizerForward.direction = .left // forward navigation
+        gestureRecognizerForward.delegate = context.coordinator
+        webView.addGestureRecognizer(gestureRecognizerForward)
+        
+        webView.isUserInteractionEnabled = true
+        webView.allowsBackForwardNavigationGestures = true
+        
+        let url = URL(string:"https://\(environments[env]!)?token=\(token)&deeplink=\(deeplink)\(consumerId != nil ? "&consumerId=\(consumerId!)" : "")\(handleMFA != false ? "&handleMFA=\(handleMFA)&userID=\(userId!)&jobId=\(jobId!)" : "")")
 
         let request = URLRequest(url: url!)
         webView.load(request)
@@ -62,7 +85,6 @@ public struct AerosyncSDK: UIViewRepresentable{
     }
     
     public func updateUIView(_ uiView: WKWebView, context: Context) {
-        
         guard !shouldDismiss || !context.environment.presentationMode.wrappedValue.isPresented else {
                context.environment.presentationMode.wrappedValue.dismiss()
                return
@@ -70,14 +92,44 @@ public struct AerosyncSDK: UIViewRepresentable{
     }
     
     public func makeCoordinator() -> Coordinator {
-        Coordinator(wrapper: self)
+        return Coordinator(wrapper: self)
     }
+
     
-    public class Coordinator : NSObject, WKNavigationDelegate, WKScriptMessageHandler, WKUIDelegate{
+    public class Coordinator : NSObject, WKNavigationDelegate, WKScriptMessageHandler, WKUIDelegate, UIGestureRecognizerDelegate{
         
         var wrapper: AerosyncSDK
+        var webView: WKWebView?
+        
         init(wrapper: AerosyncSDK) {
             self.wrapper = wrapper
+        }
+        
+        init(wrapper: AerosyncSDK, webView:WKWebView) {
+            self.wrapper = wrapper
+            self.webView = webView
+        }
+        
+        
+        public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            return true
+        }
+        
+        public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            return true
+        }
+
+        
+        @objc public func handleBack() {
+            if webView!.canGoBack {
+                webView!.goBack()
+            }
+        }
+        
+        @objc public func handleForward() {
+            if webView!.canGoForward {
+                webView!.goForward()
+            }
         }
         
         public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -88,7 +140,6 @@ public struct AerosyncSDK: UIViewRepresentable{
             if message.name == "onEvent", let messageBody = message.body as? String {
                 //print("Received message from the web: OnEvent \(messageBody)")
                 wrapper.onEvent(messageBody)
-    
             }
             if message.name == "onSuccess", let messageBody = message.body as? String {
                 //print("Received message from the web: OnSuccess \(messageBody)")
