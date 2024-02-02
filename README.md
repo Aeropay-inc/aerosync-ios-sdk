@@ -32,12 +32,16 @@ struct AerosyncWidgetView : View {
             NavigationLink{
                 AerosyncSDK(token: "...",
                  env: "staging", 
-                 deeplink: "aerosync:connect", 
+                 deeplink: "aerosync:connect",
+                 consumerId: ""
                  onEvent: self.onEvent, 
                  onSuccess: self.onSuccess, 
                  onClose: self.onClose, 
                  onLoad: self.onLoad, 
                  onError: self.onError,
+                 handleMFA: false,
+                 userId: "",
+                 jobId: "",
                  )
                 
             } label: {
