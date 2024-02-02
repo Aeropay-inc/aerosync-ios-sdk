@@ -30,7 +30,15 @@ struct AerosyncWidgetView : View {
     var body: some View{
         NavigationStack{
             NavigationLink{
-                AerosyncSDK(token: "...", env: "staging", deeplink: "aerosync://connect", onEvent: self.onEvent, onSuccess: self.onSuccess, onClose: self.onClose, onLoad: self.onLoad, onError: self.onError)
+                AerosyncSDK(token: "...",
+                 env: "staging", 
+                 deeplink: "aerosync:connect", 
+                 onEvent: self.onEvent, 
+                 onSuccess: self.onSuccess, 
+                 onClose: self.onClose, 
+                 onLoad: self.onLoad, 
+                 onError: self.onError,
+                 )
                 
             } label: {
                 VStack {
@@ -80,6 +88,10 @@ Each callback returns a String message that comes back from the widget based on 
 | `onClose`   | `function(response)` | **Required**. This method will be triggered when the Aerosync widget is closed.                                                                       |
 | `onError`   | `function(response)` | **Required**. The method is called if AeroSync-UI dispatches any error events.                                                                        |
 | `deeplink`  | `string`             | **Required** Deeplink from your app.                                                                                                                  |
+| `consumerId` | `string`             | Unique ID that represents the client to apply the customization. Contact the team for more information."                                              |
+| `handleMFA`  | `bool`               | Boolean value that determines MFA widget invocation. Contact the team for more information."                                                          |
+| `jobId`      | `string`             | Unique ID that represents the current MFA jobId. Contact the team for more information."                                                              |
+| `userId`     | `string`             | Unique ID that represents the current MFA userId. Contact the team for more information."                                                             |
 > 📘 The deeplink parameter is a required field that links back to your iOS application for the best oAuth authentication experience.
 > 
 > The largest FIs in the US use oAuth experiences to authenticate their end user's banks for the optimal user experience in a secure manner.
