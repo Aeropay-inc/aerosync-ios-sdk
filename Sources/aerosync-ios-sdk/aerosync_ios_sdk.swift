@@ -4,8 +4,10 @@
 import SwiftUI
 import WebKit
 
-var environments = ["staging": "staging.aerosync.com/",
-                    "production": "www.aerosync.com/"]
+var environments = ["dev": "https://qa-sync.aero.inc",
+                    "sandbox": "https://sandbox.aerosync.com",
+                    "staging": "https://staging-sync.aero.inc",
+                    "production": "https://sync.aero.inc"]
 
 #if os(iOS)
 @available(iOS 14.0, *)
@@ -77,8 +79,11 @@ public struct AerosyncSDK: UIViewRepresentable{
         webView.isUserInteractionEnabled = true
         webView.allowsBackForwardNavigationGestures = true
         
-        let url = URL(string:"https://\(environments[env]!)?token=\(token)&deeplink=\(deeplink)\(consumerId != nil ? "&consumerId=\(consumerId!)" : "")\(handleMFA != false ? "&handleMFA=\(handleMFA)&userID=\(userId!)&jobId=\(jobId!)" : "")")
-
+        let url = URL(string: """
+            \(environments[env]!)?token=\(token)&deeplink=\(deeplink)\
+            \(consumerId != nil ? "&consumerId=\(consumerId!)" : "")\
+            \(handleMFA != false ? "&handleMFA=\(handleMFA)&userID=\(userId!)&jobId=\(jobId!)" : "")
+            """)
         let request = URLRequest(url: url!)
         webView.load(request)
         return webView
@@ -95,8 +100,7 @@ public struct AerosyncSDK: UIViewRepresentable{
         return Coordinator(wrapper: self)
     }
 
-    
-    public class Coordinator : NSObject, WKNavigationDelegate, WKScriptMessageHandler, WKUIDelegate, UIGestureRecognizerDelegate{
+    public class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler, WKUIDelegate, UIGestureRecognizerDelegate {
         
         var wrapper: AerosyncSDK
         var webView: WKWebView?
@@ -105,12 +109,6 @@ public struct AerosyncSDK: UIViewRepresentable{
             self.wrapper = wrapper
         }
         
-        init(wrapper: AerosyncSDK, webView:WKWebView) {
-            self.wrapper = wrapper
-            self.webView = webView
-        }
-        
-        
         public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
             return true
         }
@@ -118,7 +116,6 @@ public struct AerosyncSDK: UIViewRepresentable{
         public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
             return true
         }
-
         
         @objc public func handleBack() {
             if webView!.canGoBack {
@@ -134,20 +131,16 @@ public struct AerosyncSDK: UIViewRepresentable{
         
         public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
             if message.name == "onError", let messageBody = message.body as? String {
-                //print("Received message from the web: OnError \(messageBody)")
                 wrapper.onError(messageBody)
             }
             if message.name == "onEvent", let messageBody = message.body as? String {
-                //print("Received message from the web: OnEvent \(messageBody)")
                 wrapper.onEvent(messageBody)
             }
             if message.name == "onSuccess", let messageBody = message.body as? String {
-                //print("Received message from the web: OnSuccess \(messageBody)")
                 wrapper.shouldDismiss = true
                 wrapper.onSuccess(messageBody)
             }
             if message.name == "onClose", let messageBody = message.body as? Any {
-                //print("Received message from the web: OnClose \(messageBody)")
                 wrapper.shouldDismiss = true
                 wrapper.onClose("Closed")
             }
@@ -185,4 +178,3 @@ public struct AerosyncSDK: UIViewRepresentable{
     }
 }
 #endif
-
