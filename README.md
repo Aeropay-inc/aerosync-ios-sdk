@@ -33,7 +33,7 @@ struct AerosyncWidgetView : View {
                 AerosyncSDK(token: "...",
                  env: "staging", 
                  deeplink: "aerosync:connect",
-                 consumerId: ""
+                 configurationId: ""
                  onEvent: self.onEvent, 
                  onSuccess: self.onSuccess, 
                  onClose: self.onClose, 
@@ -42,6 +42,7 @@ struct AerosyncWidgetView : View {
                  handleMFA: false,
                  userId: "",
                  jobId: "",
+                 aeroPassUserUuid: "",
                  )
                 
             } label: {
@@ -92,7 +93,8 @@ Each callback returns a String message that comes back from the widget based on 
 | `onClose`   | `function(response)` | **Required**. This method will be triggered when the Aerosync widget is closed.                                                                       |
 | `onError`   | `function(response)` | **Required**. The method is called if AeroSync-UI dispatches any error events.                                                                        |
 | `deeplink`  | `string`             | **Required** Deeplink from your app.                                                                                                                  |
-| `consumerId` | `string`             | Unique ID that represents the client to apply the customization. Contact the team for more information."                                              |
+| `configurationId` | `string`             | Unique ID that represents the client to apply the customization. Contact the team for more information."                                              |
+| `aeroPassUserUuid` | `string`             | Unique ID that represents the user’s UUID for AeroPass. Contact the team for more information."                                              |
 | `handleMFA`  | `bool`               | Boolean value that determines MFA widget invocation. Contact the team for more information."                                                          |
 | `jobId`      | `string`             | Unique ID that represents the current MFA jobId. Contact the team for more information."                                                              |
 | `userId`     | `string`             | Unique ID that represents the current MFA userId. Contact the team for more information."                                                             |
@@ -106,10 +108,10 @@ Store onSuccess() callback return to authenticate with the Aerosync API to retri
 ```json
 {
   "payload":     {  
-      "ClientName": "client3",  
-      "FILoginAcctId": "{\"u_guid\":\"USR-701a457e-5b93-4598-b7a1-b968c495ee3f\", \"m_guid\": \"MBR-d699c457-90f7-4b96-96c1-c50a445eabec\", \"a_guid\": \"ACT-9f5549d6-e402-43f4-8351-cd4018de7a80\"}",  
-      "user_id": "a2c7f64f-3df9-4090-b3bd-ad6fc3003c90",  
-      "user_password": "735e33b9-78ec-4887-99d7-a3056997ceb9" },
+      "clientName": "client3",  
+      "userId": "a2c7f64f-3df9-4090-b3bd-ad6fc3003c90",  
+      "aeropassUserUuid": "eb69c22a-894e-4b5b-a6d9-145acf4952ac",
+    "connectionId": "fbb673d1-f104-4409-bf6d-89400c5fc6c6"},
   "type": "pageSuccess"
 }
 ```

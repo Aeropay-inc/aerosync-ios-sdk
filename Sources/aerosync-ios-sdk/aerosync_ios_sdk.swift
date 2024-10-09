@@ -4,33 +4,36 @@
 import SwiftUI
 import WebKit
 
-var environments = ["staging": "staging.aerosync.com/",
-                    "production": "www.aerosync.com/"]
+var environments = ["dev": "https://qa-sync.aero.inc",
+                    "staging": "https://staging-sync.aero.inc",
+                    "production": "https://sync.aero.inc"]
 
 #if os(iOS)
 @available(iOS 14.0, *)
-public struct AerosyncSDK: UIViewRepresentable{
+public struct AerosyncSDK: UIViewRepresentable {
     @State fileprivate var shouldDismiss = false
     
     var token: String
     var env: String
     var deeplink: String
-    var consumerId: String?
-    var onEvent : (Any) -> ()
-    var onSuccess : (String) -> ()
-    var onClose : (Any) -> ()
-    var onLoad : (Any) -> ()
-    var onError : (Any) -> ()
-    var handleMFA : Bool
+    var configurationId: String?
+    var aeroPassUserUuid: String?
+    var onEvent: (Any) -> ()
+    var onSuccess: (String) -> ()
+    var onClose: (Any) -> ()
+    var onLoad: (Any) -> ()
+    var onError: (Any) -> ()
+    var handleMFA: Bool
     var userId: String?
     var jobId: String?
     
-    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, consumerId: String? = nil, onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void, handleMFA: Bool = false, jobId: String? = "", userId: String? = "") {
+    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, configurationId: String? = nil, aeroPassUserUuid: String? = nil, onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void, handleMFA: Bool = false, jobId: String? = "", userId: String? = "") {
         self.shouldDismiss = shouldDismiss
         self.token = token
         self.env = env
         self.deeplink = deeplink
-        self.consumerId = consumerId
+        self.configurationId = configurationId
+        self.aeroPassUserUuid = aeroPassUserUuid
         self.onEvent = onEvent
         self.onSuccess = onSuccess
         self.onClose = onClose
@@ -77,7 +80,7 @@ public struct AerosyncSDK: UIViewRepresentable{
         webView.isUserInteractionEnabled = true
         webView.allowsBackForwardNavigationGestures = true
         
-        let url = URL(string:"https://\(environments[env]!)?token=\(token)&deeplink=\(deeplink)\(consumerId != nil ? "&consumerId=\(consumerId!)" : "")\(handleMFA != false ? "&handleMFA=\(handleMFA)&userID=\(userId!)&jobId=\(jobId!)" : "")")
+        let url = URL(string: "\(environments[env]!)?token=\(token)&deeplink=\(deeplink)\(configurationId != nil ? "&configurationId=\(configurationId!)" : "")\(handleMFA != false ? "&handleMFA=\(handleMFA)&userID=\(userId!)&jobId=\(jobId!)" : "")\(aeroPassUserUuid != nil ? "&aeroPassUserUuid=\(aeroPassUserUuid!)" : "")")
 
         let request = URLRequest(url: url!)
         webView.load(request)
@@ -95,8 +98,7 @@ public struct AerosyncSDK: UIViewRepresentable{
         return Coordinator(wrapper: self)
     }
 
-    
-    public class Coordinator : NSObject, WKNavigationDelegate, WKScriptMessageHandler, WKUIDelegate, UIGestureRecognizerDelegate{
+    public class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler, WKUIDelegate, UIGestureRecognizerDelegate {
         
         var wrapper: AerosyncSDK
         var webView: WKWebView?
@@ -104,12 +106,6 @@ public struct AerosyncSDK: UIViewRepresentable{
         init(wrapper: AerosyncSDK) {
             self.wrapper = wrapper
         }
-        
-        init(wrapper: AerosyncSDK, webView:WKWebView) {
-            self.wrapper = wrapper
-            self.webView = webView
-        }
-        
         
         public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
             return true
@@ -119,7 +115,6 @@ public struct AerosyncSDK: UIViewRepresentable{
             return true
         }
 
-        
         @objc public func handleBack() {
             if webView!.canGoBack {
                 webView!.goBack()
@@ -134,20 +129,16 @@ public struct AerosyncSDK: UIViewRepresentable{
         
         public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
             if message.name == "onError", let messageBody = message.body as? String {
-                //print("Received message from the web: OnError \(messageBody)")
                 wrapper.onError(messageBody)
             }
             if message.name == "onEvent", let messageBody = message.body as? String {
-                //print("Received message from the web: OnEvent \(messageBody)")
                 wrapper.onEvent(messageBody)
             }
             if message.name == "onSuccess", let messageBody = message.body as? String {
-                //print("Received message from the web: OnSuccess \(messageBody)")
                 wrapper.shouldDismiss = true
                 wrapper.onSuccess(messageBody)
             }
             if message.name == "onClose", let messageBody = message.body as? Any {
-                //print("Received message from the web: OnClose \(messageBody)")
                 wrapper.shouldDismiss = true
                 wrapper.onClose("Closed")
             }
@@ -185,4 +176,3 @@ public struct AerosyncSDK: UIViewRepresentable{
     }
 }
 #endif
-
