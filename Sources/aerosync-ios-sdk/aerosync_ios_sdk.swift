@@ -3,6 +3,8 @@
 
 import SwiftUI
 import WebKit
+import QuantumIOS
+import UIKit
 
 var environments = ["dev": "https://qa-sync.aero.inc",
                     "sandbox": "https://sandbox.aerosync.com",
@@ -11,7 +13,8 @@ var environments = ["dev": "https://qa-sync.aero.inc",
 
 #if os(iOS)
 @available(iOS 14.0, *)
-public struct AerosyncSDK: UIViewRepresentable{
+public struct AerosyncSDK: UIViewControllerRepresentable {
+    public typealias UIViewControllerType = UIKitViewController
     @State fileprivate var shouldDismiss = false
     
     var token: String
@@ -43,12 +46,15 @@ public struct AerosyncSDK: UIViewRepresentable{
         self.userId = userId
     }
     
-    public func makeUIView(context: Context) -> WKWebView {
+    public func makeUIViewController(context: Context) -> UIKitViewController {
         let prefs = WKWebpagePreferences()
         prefs.allowsContentJavaScript = true
         let config = WKWebViewConfiguration()
         
         let webView = WKWebView(frame: .zero, configuration: config)
+        
+        let quantum: Quantum = Quantum(view: webView, controller: UIKitViewController())
+        
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         // inject JS to capture console.log output and send to iOS
@@ -86,10 +92,10 @@ public struct AerosyncSDK: UIViewRepresentable{
             """)
         let request = URLRequest(url: url!)
         webView.load(request)
-        return webView
+        return UIKitViewController()
     }
     
-    public func updateUIView(_ uiView: WKWebView, context: Context) {
+    public func updateUIViewController(_ uiViewController: UIKitViewController, context: Context) {
         guard !shouldDismiss || !context.environment.presentationMode.wrappedValue.isPresented else {
                context.environment.presentationMode.wrappedValue.dismiss()
                return
@@ -178,3 +184,9 @@ public struct AerosyncSDK: UIViewRepresentable{
     }
 }
 #endif
+
+public class UIKitViewController: UIViewController {
+    public override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+}

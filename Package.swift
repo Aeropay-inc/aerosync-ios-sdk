@@ -14,11 +14,15 @@ let package = Package(
             name: "aerosync-ios-sdk",
             targets: ["aerosync-ios-sdk"]),
     ],
+    dependencies: [
+       .package(url: "https://github.com/atomicfi/quantum-ios", branch: "main")
+    ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "aerosync-ios-sdk"),
+            name: "aerosync-ios-sdk",
+            dependencies: [.product(name: "QuantumIOS", package: "quantum-ios")]),
         .testTarget(
             name: "aerosync-ios-sdkTests",
             dependencies: ["aerosync-ios-sdk"]),
