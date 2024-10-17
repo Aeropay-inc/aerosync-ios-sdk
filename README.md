@@ -31,7 +31,7 @@ struct AerosyncWidgetView : View {
         NavigationStack{
             NavigationLink{
                 AerosyncSDK(token: "...",
-                 env: "staging", 
+                 env: "sandbox", 
                  deeplink: "aerosync:connect",
                  consumerId: ""
                  onEvent: self.onEvent, 
@@ -107,7 +107,8 @@ Store onSuccess() callback return to authenticate with the Aerosync API to retri
 {
   "payload":     {  
       "ClientName": "client3",  
-      "user_id": "a2c7f64f-3df9-4090-b3bd-ad6fc3003c90",  
+      "user_id": "a2c7f64f-3df9-4090-b3bd-ad6fc3003c90",
+      "FILoginAcctId": "{\"u_guid\":\"USR-701a457e-5b93-4598-b7a1-b968c495ee3f\", \"m_guid\": \"MBR-d699c457-90f7-4b96-96c1-c50a445eabec\", \"a_guid\": \"ACT-9f5549d6-e402-43f4-8351-cd4018de7a80\"}",
       "user_password": "735e33b9-78ec-4887-99d7-a3056997ceb9" },
   "type": "pageSuccess"
 }
