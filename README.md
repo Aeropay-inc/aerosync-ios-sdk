@@ -68,6 +68,7 @@ class UrlLauncherExample extends State<UrlLauncherPage> {
   late bool _handleMFA = false;
   late String _jobId = "";
   late String _userId = "";
+  late String _aeroPassUserUuid = "";
   Map _style = {};
   late bool isLoading;
 
@@ -83,10 +84,11 @@ class UrlLauncherExample extends State<UrlLauncherPage> {
                 token: _token,
                 style: _style,
                 deeplink: _deeplink,
-                consumeerId: _configurationId,
+                configurationId: _configurationId,
                 handleMFA: _handleMFA,
                 jobId: _jobId,
                 userId: _userId,
+                aeroPassUserUuid: _aeroPassUserUuid,
               )
             : SizedBox(), // this includes all the button and functionality
       ),
@@ -109,6 +111,7 @@ class LaunchButton extends StatelessWidget {
   var handleMFA;
   var jobId;
   var userId;
+  var aeroPassUserUuid;
   LaunchButton(
       {Key? key,
       required this.env,
@@ -118,7 +121,8 @@ class LaunchButton extends StatelessWidget {
       this.configurationId,
       this.handleMFA,
       this.jobId,
-      this.userId})
+      this.userId
+      this.aeroPassUserUuid})
       : super(key: key);
 
   // handle the OnEvent callback from aerosync
@@ -166,6 +170,7 @@ class LaunchButton extends StatelessWidget {
                       handleMFA: handleMFA,
                       jobId: jobId,
                       userId: userId,
+                      aeroPassUserUuid: aeroPassUserUuid,
                     )))
           },
           child: Text(
@@ -266,6 +271,7 @@ Each callback returns an `eventType` value and data that is returned from aerosy
 | `handleMFA` | `bool`               | Boolean value that determines MFA widget invocation. Contact the team for more information."                                                          |
 | `jobId`     | `string`             | Unique ID that represents the current MFA jobId. Contact the team for more information."                                                              |
 | `userId`    | `string`             | Unique ID that represents the current MFA userId. Contact the team for more information."                                                             |
+| `aeroPassUserUuid`    | `string`             | Unique ID that represents the user’s UUID for AeroPass. Contact the team for more information."                                                             |
 
 ### AeroSyncEmbeddedView Parameters
 
