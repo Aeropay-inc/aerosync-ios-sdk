@@ -1,6 +1,3 @@
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
-
 import SwiftUI
 import WebKit
 
@@ -17,30 +14,34 @@ public struct AerosyncSDK: UIViewRepresentable{
     var token: String
     var env: String
     var deeplink: String
-    var consumerId: String?
+    var configurationId: String?
+    var stateCode: String?
+    var manualLinkOnly: Bool
+    var handleMFA : Bool
+    var jobId: String?
+    var connectionId: String?
     var onEvent : (Any) -> ()
     var onSuccess : (String) -> ()
     var onClose : (Any) -> ()
     var onLoad : (Any) -> ()
     var onError : (Any) -> ()
-    var handleMFA : Bool
-    var userId: String?
-    var jobId: String?
     
-    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, consumerId: String? = nil, onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void, handleMFA: Bool = false, jobId: String? = "", userId: String? = "") {
+    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, configurationId: String? = nil, stateCode: String? = nil, manualLinkOnly: Bool = false, handleMFA: Bool = false, jobId: String? = "", connectionId: String? = "", onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void) {
         self.shouldDismiss = shouldDismiss
         self.token = token
         self.env = env
         self.deeplink = deeplink
-        self.consumerId = consumerId
+        self.configurationId = configurationId
+        self.stateCode = stateCode
+        self.manualLinkOnly = manualLinkOnly
+        self.handleMFA = handleMFA
+        self.jobId = jobId
+        self.connectionId = connectionId
         self.onEvent = onEvent
         self.onSuccess = onSuccess
         self.onClose = onClose
         self.onLoad = onLoad
         self.onError = onError
-        self.handleMFA = handleMFA
-        self.jobId = jobId
-        self.userId = userId
     }
     
     public func makeUIView(context: Context) -> WKWebView {
@@ -63,6 +64,7 @@ public struct AerosyncSDK: UIViewRepresentable{
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onEvent")
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onError")
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onSuccess")
+        webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onBankClick")
         context.coordinator.webView = webView
 
         // SETUP GESTURE RECOGNIZER
@@ -79,12 +81,43 @@ public struct AerosyncSDK: UIViewRepresentable{
         webView.isUserInteractionEnabled = true
         webView.allowsBackForwardNavigationGestures = true
         
-        let url = URL(string: """
-            \(environments[env]!)?token=\(token)&deeplink=\(deeplink)\
-            \(consumerId != nil ? "&consumerId=\(consumerId!)" : "")\
-            \(handleMFA != false ? "&handleMFA=\(handleMFA)&userID=\(userId!)&jobId=\(jobId!)" : "")
-            """)
-        let request = URLRequest(url: url!)
+        // Build URL components properly with encoding
+        var components = URLComponents(string: environments[env]!)!
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "token", value: token),
+            URLQueryItem(name: "deeplink", value: deeplink),
+            URLQueryItem(name: "version", value: "2.0.0")
+        ]
+
+        if let configId = configurationId {
+            queryItems.append(URLQueryItem(name: "configurationId", value: configId))
+        }
+
+        if let stateCodeValue = stateCode {
+            queryItems.append(URLQueryItem(name: "stateCode", value: stateCodeValue))
+        }
+
+        if manualLinkOnly {
+            queryItems.append(URLQueryItem(name: "manualLinkOnly", value: "true"))
+        }
+
+        if handleMFA {
+            queryItems.append(URLQueryItem(name: "handleMFA", value: "true"))
+            if let connId = connectionId {
+                queryItems.append(URLQueryItem(name: "connectionId", value: connId))
+            }
+            if let jId = jobId {
+                queryItems.append(URLQueryItem(name: "jobId", value: jId))
+            }
+        }
+
+        components.queryItems = queryItems
+
+        guard let url = components.url else {
+            return webView
+        }
+
+        let request = URLRequest(url: url)
         webView.load(request)
         return webView
     }
@@ -130,19 +163,29 @@ public struct AerosyncSDK: UIViewRepresentable{
         }
         
         public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-            if message.name == "onError", let messageBody = message.body as? String {
-                wrapper.onError(messageBody)
-            }
-            if message.name == "onEvent", let messageBody = message.body as? String {
-                wrapper.onEvent(messageBody)
-            }
-            if message.name == "onSuccess", let messageBody = message.body as? String {
-                wrapper.shouldDismiss = true
-                wrapper.onSuccess(messageBody)
-            }
-            if message.name == "onClose", let messageBody = message.body as? Any {
-                wrapper.shouldDismiss = true
-                wrapper.onClose("Closed")
+            print(">>>>>> Received message from WebView: \(message)")
+            print(">>>>>> Received message from WebView (BODY): \(message.body)")
+            print(">>>>>> Received message from WebView (NAME): \(message.name)")
+            switch message.name {
+                case "onError":
+                    wrapper.onError(message.body)
+                case "onBankClick":
+                    wrapper.onEvent(message.body)
+                case "onEvent":
+                    print("onEvent: \(message.body)")
+                    wrapper.onEvent(message.body)
+                case "onSuccess":
+                    wrapper.shouldDismiss = true
+                    if let body = message.body as? String {
+                        wrapper.onSuccess(body)
+                    } else {
+                        wrapper.onSuccess("\(message.body)")
+                    }
+                case "onClose":
+                    wrapper.shouldDismiss = true
+                    wrapper.onClose("Closed")
+                default:
+                    print("Unhandled event type: \(message.name)")
             }
         }
         
