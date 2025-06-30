@@ -409,18 +409,6 @@ flutter run -d <device-id>
    <uses-permission android:name="android.permission.INTERNET" />
    ```
 
-## Demo App
-
-The included demo app demonstrates both embedded view and normal widget functionality.
-
-To run the demo:
-
-1. Clone this repository
-2. Run `flutter pub get`
-3. Run `flutter run`
-4. Enter your token and configuration
-5. Test both embedded view and normal widget functionality
-
 ## Troubleshooting
 
 ### Common Issues
