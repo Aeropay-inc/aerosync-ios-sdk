@@ -1,322 +1,260 @@
+# AeroSync iOS SDK
 
-# aerosync-flutter-sdk
+A native iOS SDK that provides secure bank account linking capabilities for iOS applications. Built with SwiftUI and WKWebView, this SDK allows users to securely connect their bank accounts through their bank's website with fast, secure, and tokenized connections.
 
-This Flutter SDK provides an interface to load Aerosync-UI in Flutter applications through flutter_inappwebview. Securely link your bank account through your bank's website. Log in with a fast, secure, and tokenized connection. Your information is never shared or sold.
+## 🚀 Features
 
-## Features
-
-- **Normal Widget**: Full bank linking experience with complete UI
-- **Embedded View**: Lightweight bank search and selection interface
-- **Seamless Integration**: Automatic transition from embedded view to normal widget
+- **AerosyncSDK**: Full bank linking experience with complete UI
+- **AerosyncEmbeddedView**: Lightweight bank search and selection interface
+- **Native iOS**: Built with SwiftUI and WKWebView for optimal performance
 - **State Management**: Maintains session state across different views
-- **Cross-Platform**: Works on iOS, Android, and Web
 - **Secure**: All communications are encrypted and tokenized
+- **MFA Support**: Multi-factor authentication handling
+- **Deep Linking**: OAuth authentication support
+- **Customizable**: Theming and styling options
 
 ## Requirements
 
-- Flutter 3.0.0+
-- Dart 2.17.0+
-- iOS 11.0+ / Android API level 21+
+- iOS 14.0+
+- Xcode 12.0+
+- Swift 5.3+
 
 ## Installation
 
-### 1. Add Dependency
+### Swift Package Manager
 
-Add `aerosync_flutter_sdk` to your `pubspec.yaml` file. We are currently on constant development for fine-tuning and improvement currently using the `^1.1.0` as our release with the most up to date features and fixes.
+Add the following to your `Package.swift` file:
 
-```yaml
-dependencies:
-  aerosync_flutter_sdk: ^1.1.0
+```swift
+dependencies: [
+    .package(url: "https://github.com/your-org/aerosync-ios-sdk.git", from: "2.0.0")
+]
 ```
 
-### 2. Install Dependencies
+Or add it through Xcode:
 
-```bash
-flutter pub get
+1. Open your project in Xcode
+2. Go to **File** → **Add Package Dependencies**
+3. Enter the repository URL: `https://github.com/your-org/aerosync-ios-sdk.git`
+4. Click **Add Package**
+
+### Import the SDK
+
+```swift
+import aerosync_ios_sdk
 ```
 
-### 3. Import the Library
+## Usage Examples
 
-```dart
-import 'package:aerosync_flutter_sdk/aerosync_flutter_sdk.dart';
-```
+### 1. AerosyncSDK (Full Bank Linking Experience)
 
-## Usage/Examples
+The main SDK provides a complete bank linking experience:
 
-### 1. Normal Widget Implementation (AerosyncSDKPage)
+```swift
+import SwiftUI
+import aerosync_ios_sdk
 
-The Aerosync plugin is brought in as a separate window that launches the [Flutter InAppWebView Plugin](https://pub.dev/packages/flutter_inappwebview) with the Aerosync starting url. In this example the widget is navigated to when `ElevatedButton` is pressed.
+struct BankLinkingView: View {
+    let token = "your-token-here"
+    let environment = "sandbox" // dev, staging, sandbox, production
+    let deeplink = "yourapp://"
 
-```dart
-import 'package:flutter/material.dart';
-import 'package:aerosync_flutter_sdk/aerosync_flutter_sdk.dart';
-
-void main() => runApp(UrlLauncherPage());
-
-class UrlLauncherPage extends StatefulWidget {
-  UrlLauncherPage({Key? key}) : super(key: key);
-  @override
-  UrlLauncherExample createState() => UrlLauncherExample();
-}
-
-class UrlLauncherExample extends State<UrlLauncherPage> {
-  static const String _title = 'URL Launcher Example';
-  late String _token = "";
-  late String _env = "sandbox";
-  late String _deeplink = "";
-  late String _configurationId = "";
-  late bool _handleMFA = false;
-  late String _jobId = "";
-  late String _userId = "";
-  late String _aeroPassUserUuid = "";
-  Map _style = {};
-  late bool isLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: _title,
-      home: Scaffold(
-        appBar: AppBar(title: const Text(_title)),
-        body: isLoading
-            ? LaunchButton(
-                env: _env,
-                token: _token,
-                style: _style,
-                deeplink: _deeplink,
-                configurationId: _configurationId,
-                handleMFA: _handleMFA,
-                jobId: _jobId,
-                userId: _userId,
-                aeroPassUserUuid: _aeroPassUserUuid,
-              )
-            : SizedBox(), // this includes all the button and functionality
-      ),
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    isLoading = false;
-  }
-}
-
-class LaunchButton extends StatelessWidget {
-  var env;
-  var token;
-  var style;
-  var deeplink;
-  var configurationId;
-  var handleMFA;
-  var jobId;
-  var userId;
-  var aeroPassUserUuid;
-  LaunchButton(
-      {Key? key,
-      required this.env,
-      required this.token,
-      required this.style,
-      required this.deeplink,
-      this.configurationId,
-      this.handleMFA,
-      this.jobId,
-      this.userId
-      this.aeroPassUserUuid})
-      : super(key: key);
-
-  // handle the OnEvent callback from aerosync
-  handleOnEventAerosync(eventType, data) {
-  }
-
-  // handle the OnSuccess callback from aerosync
-  handleOnSuccessAerosync(eventType, data) {
-    Map<String, dynamic> successData = jsonDecode(data);
-  }
-
-  // handle the OnClose callback from aerosync
-  handleOnCloseAerosync(eventType, data) {
-  }
-
-  // handle the OnLoad callback from aerosync
-  handleOnLoadAerosync(eventType, data) {
-  }
-
-  // handle the OnError callback from aerosync
-  handleOnErrorAerosync(eventType, data) {
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-        child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ElevatedButton(
-          onPressed: () => {
-            Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => AerosyncSDKPage(
-                      env: env,
-                      token: token,
-                      style: style,
-                      onEvent: handleOnEventAerosync,
-                      onSuccess: handleOnSuccessAerosync,
-                      onClose: handleOnCloseAerosync,
-                      onLoad: handleOnLoadAerosync,
-                      onError: handleOnErrorAerosync,
-                      deeplink: deeplink,
-                      configurationId: configurationId,
-                      handleMFA: handleMFA,
-                      jobId: jobId,
-                      userId: userId,
-                      aeroPassUserUuid: aeroPassUserUuid,
-                    )))
-          },
-          child: Text(
-            'Connect',
-            style: TextStyle(fontSize: 20),
-          ),
-        ),
-      ],
-    ));
-  }
+    var body: some View {
+        NavigationView {
+            AerosyncSDK(
+                token: token,
+                env: environment,
+                deeplink: deeplink,
+                configurationId: "your-config-id", // Optional
+                theme: "light", // "light" or "dark"
+                handleMFA: false,
+                manualLinkOnly: false,
+                onSuccess: { data in
+                    print("Bank linking successful: \(data)")
+                    // Handle successful bank connection
+                },
+                onClose: { data in
+                    print("Widget closed: \(data)")
+                    // Handle widget closure
+                },
+                onEvent: { data in
+                    print("Event received: \(data)")
+                    // Handle various events
+                },
+                onError: { error in
+                    print("Error occurred: \(error)")
+                    // Handle errors
+                },
+                onLoad: { data in
+                    print("Widget loaded: \(data)")
+                    // Handle load completion
+                }
+            )
+            .navigationTitle("Link Your Bank Account")
+        }
+    }
 }
 ```
 
-### 2. Embedded View Implementation (AeroSyncEmbeddedView)
+### 2. AerosyncEmbeddedView (Bank Search Interface)
 
-The embedded view provides a lightweight bank search interface:
+The embedded view provides a lightweight bank search and selection interface:
 
-```dart
-import 'package:flutter/material.dart';
-import 'package:aerosync_flutter_sdk/aerosync_flutter_sdk.dart';
+```swift
+import SwiftUI
+import aerosync_ios_sdk
 
-class BankSearchPage extends StatefulWidget {
-  @override
-  _BankSearchPageState createState() => _BankSearchPageState();
+struct BankSearchView: View {
+    let token = "your-token-here"
+    let environment = "sandbox"
+    let deeplink = "yourapp://"
+
+    @State private var showingBankLinking = false
+    @State private var stateCode: String?
+
+    var body: some View {
+        NavigationView {
+            AerosyncEmbeddedView(
+                token: token,
+                env: environment,
+                deeplink: deeplink,
+                configurationId: "your-config-id", // Optional
+                theme: "light", // "light" or "dark"
+                onLoad: { data in
+                    print("Embedded view loaded: \(data)")
+                },
+                onBankClick: { data in
+                    print("Bank selected: \(data)")
+
+                    // Extract stateCode from the bank selection
+                    if let stateCode = data["stateCode"] as? String {
+                        self.stateCode = stateCode
+                        self.showingBankLinking = true
+                    }
+                },
+                onError: { error in
+                    print("Embedded view error: \(error)")
+                }
+            )
+            .navigationTitle("Search Banks")
+            .sheet(isPresented: $showingBankLinking) {
+                if let stateCode = stateCode {
+                    BankLinkingWithStateView(
+                        token: token,
+                        environment: environment,
+                        deeplink: deeplink,
+                        stateCode: stateCode
+                    )
+                }
+            }
+        }
+    }
 }
 
-class _BankSearchPageState extends State<BankSearchPage> {
-  void _handleLoad(data) {
-    print('Embedded view loaded: $data');
-  }
+struct BankLinkingWithStateView: View {
+    let token: String
+    let environment: String
+    let deeplink: String
+    let stateCode: String
 
-  void _handleBankClick(Map<String, dynamic> data) {
-    print('Bank selected: $data');
-    // Navigate to normal widget with stateCode
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AerosyncSDKPage(
-          env: 'dev',
-          token: 'your-token-here', // Use same token
-          stateCode: data['stateCode'], // Pass stateCode from embedded view
-          style: {'width': '350', 'height': '688', 'bgColor': '#FFFFFF'},
-          deeplink: 'yourapp://',
-          onEvent: (eventType, data) => print('Event: $data'),
-          onSuccess: (eventType, data) => print('Success: $data'),
-          onClose: (eventType, data) => Navigator.pop(context),
-          onLoad: (eventType, data) => print('Loaded: $data'),
-          onError: (eventType, data) => print('Error: $data'),
-        ),
-      ),
-    );
-  }
+    @Environment(\.presentationMode) var presentationMode
 
-  void _handleError(String error) {
-    print('Embedded view error: $error');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Search Banks')),
-      body: AeroSyncEmbeddedView(
-        token: 'your-token-here',
-        environment: 'dev',
-        deeplink: 'yourapp://',
-        configurationId: 'your-config-id', // Optional
-        theme: 'light', // 'light' or 'dark'
-        onLoad: _handleLoad,
-        onBankClick: _handleBankClick,
-        onError: _handleError,
-      ),
-    );
-  }
+    var body: some View {
+        NavigationView {
+            AerosyncSDK(
+                token: token,
+                env: environment,
+                deeplink: deeplink,
+                stateCode: stateCode, // Continue from embedded view
+                onSuccess: { data in
+                    print("Bank linking successful: \(data)")
+                    presentationMode.wrappedValue.dismiss()
+                },
+                onClose: { data in
+                    print("Widget closed: \(data)")
+                    presentationMode.wrappedValue.dismiss()
+                },
+                onEvent: { data in
+                    print("Event received: \(data)")
+                },
+                onError: { error in
+                    print("Error occurred: \(error)")
+                },
+                onLoad: { data in
+                    print("Widget loaded: \(data)")
+                }
+            )
+            .navigationTitle("Complete Bank Linking")
+            .navigationBarItems(leading: Button("Cancel") {
+                presentationMode.wrappedValue.dismiss()
+            })
+        }
+    }
 }
 ```
 
-## Parameters
+### 3. MFA (Multi-Factor Authentication) Handling
 
-The `AerosyncSDKPage` widget takes in a `env` parameter, a `token` parameter a `style` parameter `deeplink`, and callback event notifications needed for your implementation. To generate a token, check out our integration guide [here](https://api-aeropay.readme.io/docs/aerosync-implementation-guides).
+For advanced use cases requiring MFA handling:
 
-Each callback returns an `eventType` value and data that is returned from aerosync-ui.
+```swift
+AerosyncSDK(
+    token: token,
+    env: environment,
+    deeplink: deeplink,
+    handleMFA: true,
+    jobId: "your-job-id",
+    connectionId: "your-connection-id",
+    onSuccess: { data in
+        // Handle MFA success
+    },
+    onClose: { data in
+        // Handle closure
+    },
+    onEvent: { data in
+        // Handle MFA events
+    },
+    onError: { error in
+        // Handle MFA errors
+    },
+    onLoad: { data in
+        // Handle load
+    }
+)
+```
 
-### AerosyncSDKPage Parameters
+## API Reference
 
-| Parameter   | Type                 | Description                                                                                                                                           |
-| :---------- | :------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `env`       | `string`             | **Required**. Available values: dev, staging, sandbox, production.                                                                                   |
-| `token`     | `string`             | **Required**. The token generated from the [integration guide](https://api-aeropay.readme.io/docs/aerosync-implementation-guides).                    |
-| `style`\*   | `Map`                | **Required**. `{"width": "<double>", "height": "<double>", "bgColor": "<Hex color value in format "ARGB">" }`                                         |
-| `stateCode` | `string`             | **Optional**. State code for continuing from embedded view.                                                                                           |
-| `onEvent`   | `function(response)` | **Required**. This method will be triggered as the user completes the bank link workflow.                                                             |
-| `onLoad`    | `function(response)` | **Required**. Call function after the contents of webpage have been loaded as the user completes the bank link workflow.                              |
-| `onSuccess` | `function(response)` | **Required**. This method will be triggered when a bank is added successfully and the user clicks on "continue" button in the final AeroSync-UI page. |
-| `onClose`   | `function(response)` | **Required**. This method will be triggered when the Aerosync widget is closed.                                                                       |
-| `onError`   | `function(response)` | **Required**. The method is called if AeroSync-UI dispatches any error events.                                                                        |
-| `deeplink`  | `string`             | **Required** Deeplink from your app.                                                                                                                  |
-| `configurationId`| `string`             | Unique ID that represents the client to apply the customization. Contact the team for more information."                                         |
-| `handleMFA` | `bool`               | Boolean value that determines MFA widget invocation. Contact the team for more information."                                                          |
-| `jobId`     | `string`             | Unique ID that represents the current MFA jobId. Contact the team for more information."                                                              |
-| `userId`    | `string`             | Unique ID that represents the current MFA userId. Contact the team for more information."                                                             |
-| `aeroPassUserUuid`    | `string`             | Unique ID that represents the user’s UUID for AeroPass. Contact the team for more information."                                                             |
+To generate a token, check out our integration guide [here](https://api-aeropay.readme.io/docs/aerosync-implementation-guides).
 
-### AeroSyncEmbeddedView Parameters
+### AerosyncSDK Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `token` | String | Yes | Authentication token for the session |
-| `environment` | String | Yes | Environment: "dev", "staging", "sandbox", "production" |
-| `deeplink` | String | Yes | Deep link URL for your app |
-| `configurationId` | String? | No | Configuration ID for customization |
-| `theme` | String | No | UI theme: "light" or "dark" (default: "light") |
-
-- The Style parameter takes in a Map\<String, String> object with `width`, `height`, and `bgColor` parameters that will customize the Aerosync widget to your liking. the Map is Required to be sent even if you dont want to change one of the values leave the `key` out of the map or just all together send an empty map.
-
-## Parameters
-
-### AeroSyncWidget Parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `token` | String | Yes | Authentication token for the session |
-| `environment` | String | Yes | Environment: "dev", "staging", "sandbox", "production" |
+| `env` | String | Yes | Environment: "dev", "staging", "sandbox", "production" |
 | `deeplink` | String | Yes | Deep link URL for your app |
 | `configurationId` | String? | No | Configuration ID for customization |
 | `stateCode` | String? | No | State code for continuing from embedded view |
-| `aeroPassUserUuid` | String? | No | AeroPass user UUID |
-| `handleMFA` | bool | No | Whether to handle MFA flows (default: false) |
-| `manualLinkOnly` | bool | No | Whether to show only manual linking options (default: false) |
+| `handleMFA` | Bool | No | Whether to handle MFA flows (default: false) |
+| `manualLinkOnly` | Bool | No | Whether to show only manual linking options (default: false) |
 | `jobId` | String? | No | Job ID for MFA handling |
 | `connectionId` | String? | No | Connection ID for MFA handling |
 | `theme` | String | No | UI theme: "light" or "dark" (default: "light") |
-| `style` | Map<String, String>? | No | Custom styling options |
 
-### AeroSyncEmbeddedView Parameters
+### AerosyncEmbeddedView Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `token` | String | Yes | Authentication token for the session |
-| `environment` | String | Yes | Environment: "dev", "staging", "sandbox", "production" |
+| `env` | String | Yes | Environment: "dev", "staging", "sandbox", "production" |
 | `deeplink` | String | Yes | Deep link URL for your app |
 | `configurationId` | String? | No | Configuration ID for customization |
 | `theme` | String | No | UI theme: "light" or "dark" (default: "light") |
 
-## Callback Events
+### Callback Events
 
-### Normal Widget Events
+#### AerosyncSDK Events
 
 - **onEvent**: General widget events and page navigation
 - **onSuccess**: Successful bank connection with account details
@@ -324,33 +262,49 @@ Each callback returns an `eventType` value and data that is returned from aerosy
 - **onLoad**: Widget finished loading
 - **onError**: Error occurred during the process
 
-### Embedded View Events
+#### AerosyncEmbeddedView Events
 
 - **onLoad**: Embedded view finished loading
 - **onBankClick**: User selected a bank (contains stateCode for widget launch)
 - **onError**: Error occurred in embedded view
 
-## Automatic Widget Launch Flow
-
-1. User interacts with the **Embedded View** to search and select a bank
-2. When a bank is clicked, the `onBankClick` callback is triggered with a `stateCode`
-3. Your app receives the callback and navigates to the **Normal Widget** (AerosyncSDKPage)
-4. The widget launches with the `stateCode` and continues the bank linking process
-5. User completes the bank connection in the normal widget
-
 ## Deep Linking Setup
 
-> 📘 The deeplink parameter is a required field that links back to your Flutter application for the best oAuth authentication experience.
->
-> The largest FIs in the US use oAuth experiences to authenticate their end user's banks for the optimal user experience in a secure manner.
->
-> To implement deeplinking using Flutter please refer to the official Flutter Deeplink guide [here](https://docs.flutter.dev/ui/navigation/deep-linking).
+The deeplink parameter is required for optimal OAuth authentication experience with major financial institutions.
 
-## Store Connected Account
+### 1. Configure URL Scheme
 
-Store `onSuccess()` data attributes to authenticate with the Aerosync API to retrieve account information. The data value returned on the success call is a JSON encoded value so you can decode it as `jsonDecode(data)` to use it as a Map. Check the given example.
+Add your custom URL scheme to your app's `Info.plist`:
 
-**New Success Response Format:**
+```xml
+<key>CFBundleURLTypes</key>
+<array>
+    <dict>
+        <key>CFBundleURLName</key>
+        <string>com.yourapp.deeplink</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>yourapp</string>
+        </array>
+    </dict>
+</array>
+```
+
+### 2. Handle Deep Links
+
+In your `SceneDelegate.swift` or `AppDelegate.swift`:
+
+```swift
+func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    guard let url = URLContexts.first?.url else { return }
+    // Handle the deep link URL
+    print("Received deep link: \(url)")
+}
+```
+
+## Success Response Format
+
+Store `onSuccess()` data attributes to authenticate with the Aerosync API:
 
 ```json
 {
@@ -364,63 +318,18 @@ Store `onSuccess()` data attributes to authenticate with the Aerosync API to ret
 }
 ```
 
-## Setup and Development
-
-### Prerequisites
-
-First install Flutter (recommended with Flutter VS Code extension):
-https://marketplace.visualstudio.com/items?itemName=Dart-Code.flutter
-
-### Useful Commands
-
-```bash
-# Check Flutter installation
-flutter doctor
-
-# Clean project
-flutter clean
-
-# Get dependencies
-flutter pub get
-
-# Build for iOS
-flutter build ios
-
-# Build for Android
-flutter build android
-
-# Run the app
-flutter run
-
-# Run on specific device
-flutter run -d <device-id>
-```
-
-### Platform-Specific Setup
-
-#### iOS Setup
-1. Ensure iOS deployment target is **11.0 or higher**
-2. Run `cd ios && pod install` if using CocoaPods
-
-#### Android Setup
-1. Minimum SDK version: **21**
-2. Add internet permission to `android/app/src/main/AndroidManifest.xml`:
-   ```xml
-   <uses-permission android:name="android.permission.INTERNET" />
-   ```
-
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Widget not loading**: Verify your token is valid and not expired
 2. **Embedded view not responding**: Check that the environment is correctly set
-3. **Build errors**: Run `flutter clean` and `flutter pub get`
-4. **iOS build issues**: Check iOS deployment target and run `pod install`
+3. **Build errors**: Ensure iOS deployment target is 14.0+
+4. **Deep linking not working**: Verify URL scheme configuration in Info.plist
 
 ### Debug Mode
 
-Enable debug logging by checking the Flutter console for detailed information about:
+Enable debug logging by checking the Xcode console for detailed information about:
 - Widget initialization
 - State transitions
 - Error details
