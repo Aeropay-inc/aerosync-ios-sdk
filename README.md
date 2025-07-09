@@ -66,6 +66,7 @@ struct BankLinkingView: View {
                 env: environment,
                 deeplink: deeplink,
                 configurationId: "your-config-id", // Optional
+                aeroPassUserUuid: "user-uuid-123", // Optional
                 theme: "light", // "light" or "dark"
                 handleMFA: false,
                 manualLinkOnly: false,
@@ -165,7 +166,9 @@ struct BankLinkingWithStateView: View {
                 token: token,
                 env: environment,
                 deeplink: deeplink,
+                aeroPassUserUuid: "user-uuid-123", // Optional
                 stateCode: stateCode, // Continue from embedded view
+                theme: "light", // "light" or "dark"
                 onSuccess: { data in
                     print("Bank linking successful: \(data)")
                     presentationMode.wrappedValue.dismiss()
@@ -202,6 +205,8 @@ AerosyncSDK(
     token: token,
     env: environment,
     deeplink: deeplink,
+    aeroPassUserUuid: "user-uuid-123", // Optional
+    theme: "light", // "light" or "dark"
     handleMFA: true,
     jobId: "your-job-id",
     connectionId: "your-connection-id",
@@ -235,12 +240,13 @@ To generate a token, check out our integration guide [here](https://api-aeropay.
 | `env` | String | Yes | Environment: "dev", "staging", "sandbox", "production" |
 | `deeplink` | String | Yes | Deep link URL for your app |
 | `configurationId` | String? | No | Configuration ID for customization |
+| `aeroPassUserUuid` | String? | No | AeroPass user UUID for user identification |
 | `stateCode` | String? | No | State code for continuing from embedded view |
+| `theme` | String | No | UI theme: "light" or "dark" (default: "light") |
 | `handleMFA` | Bool | No | Whether to handle MFA flows (default: false) |
 | `manualLinkOnly` | Bool | No | Whether to show only manual linking options (default: false) |
 | `jobId` | String? | No | Job ID for MFA handling |
 | `connectionId` | String? | No | Connection ID for MFA handling |
-| `theme` | String | No | UI theme: "light" or "dark" (default: "light") |
 
 ### AerosyncEmbeddedView Parameters
 

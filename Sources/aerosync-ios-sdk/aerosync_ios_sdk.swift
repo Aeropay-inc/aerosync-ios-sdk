@@ -15,7 +15,9 @@ public struct AerosyncSDK: UIViewRepresentable{
     var env: String
     var deeplink: String
     var configurationId: String?
+    var aeroPassUserUuid: String?
     var stateCode: String?
+    var theme: String
     var manualLinkOnly: Bool
     var handleMFA : Bool
     var jobId: String?
@@ -26,13 +28,15 @@ public struct AerosyncSDK: UIViewRepresentable{
     var onLoad : (Any) -> ()
     var onError : (Any) -> ()
     
-    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, configurationId: String? = nil, stateCode: String? = nil, manualLinkOnly: Bool = false, handleMFA: Bool = false, jobId: String? = "", connectionId: String? = "", onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void) {
+    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, configurationId: String? = nil, aeroPassUserUuid: String? = nil, stateCode: String? = nil, theme: String = "light", manualLinkOnly: Bool = false, handleMFA: Bool = false, jobId: String? = "", connectionId: String? = "", onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void) {
         self.shouldDismiss = shouldDismiss
         self.token = token
         self.env = env
         self.deeplink = deeplink
         self.configurationId = configurationId
+        self.aeroPassUserUuid = aeroPassUserUuid
         self.stateCode = stateCode
+        self.theme = theme
         self.manualLinkOnly = manualLinkOnly
         self.handleMFA = handleMFA
         self.jobId = jobId
@@ -93,9 +97,15 @@ public struct AerosyncSDK: UIViewRepresentable{
             queryItems.append(URLQueryItem(name: "configurationId", value: configId))
         }
 
+        if let aeroPassUserUuidValue = aeroPassUserUuid {
+            queryItems.append(URLQueryItem(name: "aeroPassUserUuid", value: aeroPassUserUuidValue))
+        }
+
         if let stateCodeValue = stateCode {
             queryItems.append(URLQueryItem(name: "stateCode", value: stateCodeValue))
         }
+
+        queryItems.append(URLQueryItem(name: "defaultTheme", value: theme))
 
         if manualLinkOnly {
             queryItems.append(URLQueryItem(name: "manualLinkOnly", value: "true"))
@@ -116,6 +126,7 @@ public struct AerosyncSDK: UIViewRepresentable{
         guard let url = components.url else {
             return webView
         }
+        print("Loading Widget URL: \(url)")
 
         let request = URLRequest(url: url)
         webView.load(request)
@@ -163,9 +174,6 @@ public struct AerosyncSDK: UIViewRepresentable{
         }
         
         public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-            print(">>>>>> Received message from WebView: \(message)")
-            print(">>>>>> Received message from WebView (BODY): \(message.body)")
-            print(">>>>>> Received message from WebView (NAME): \(message.name)")
             switch message.name {
                 case "onError":
                     wrapper.onError(message.body)
