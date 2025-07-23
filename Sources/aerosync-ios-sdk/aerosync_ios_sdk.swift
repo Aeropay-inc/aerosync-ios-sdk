@@ -15,7 +15,7 @@ public struct AerosyncSDK: UIViewRepresentable{
     var env: String
     var deeplink: String
     var configurationId: String?
-    var aeroPassUserUuid: String?
+    var aeroPassUserUuid: String
     var stateCode: String?
     var theme: String
     var manualLinkOnly: Bool
@@ -28,7 +28,7 @@ public struct AerosyncSDK: UIViewRepresentable{
     var onLoad : (Any) -> ()
     var onError : (Any) -> ()
     
-    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, configurationId: String? = nil, aeroPassUserUuid: String? = nil, stateCode: String? = nil, theme: String = "light", manualLinkOnly: Bool = false, handleMFA: Bool = false, jobId: String? = "", connectionId: String? = "", onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void) {
+    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, aeroPassUserUuid: String, configurationId: String? = nil, stateCode: String? = nil, theme: String = "light", manualLinkOnly: Bool = false, handleMFA: Bool = false, jobId: String? = "", connectionId: String? = "", onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void) {
         self.shouldDismiss = shouldDismiss
         self.token = token
         self.env = env
@@ -97,9 +97,7 @@ public struct AerosyncSDK: UIViewRepresentable{
             queryItems.append(URLQueryItem(name: "configurationId", value: configId))
         }
 
-        if let aeroPassUserUuidValue = aeroPassUserUuid {
-            queryItems.append(URLQueryItem(name: "aeroPassUserUuid", value: aeroPassUserUuidValue))
-        }
+        queryItems.append(URLQueryItem(name: "aeroPassUserUuid", value: aeroPassUserUuid))
 
         if let stateCodeValue = stateCode {
             queryItems.append(URLQueryItem(name: "stateCode", value: stateCodeValue))
