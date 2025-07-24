@@ -30,18 +30,20 @@ struct AerosyncWidgetView : View {
     var body: some View{
         NavigationStack{
             NavigationLink{
-                AerosyncSDK(token: "...",
-                 env: "sandbox", 
+                AerosyncSDK(
+                 token: "...",
+                 env: "sandbox",
                  deeplink: "aerosync:connect",
-                 consumerId: ""
-                 onEvent: self.onEvent, 
-                 onSuccess: self.onSuccess, 
-                 onClose: self.onClose, 
-                 onLoad: self.onLoad, 
+                 consumerId: "",
+                 theme: "light", // "light" or "dark"
+                 onEvent: self.onEvent,
+                 onSuccess: self.onSuccess,
+                 onClose: self.onClose,
+                 onLoad: self.onLoad,
                  onError: self.onError,
                  handleMFA: false,
                  userId: "",
-                 jobId: "",
+                 jobId: ""
                  )
                 
             } label: {
@@ -86,6 +88,7 @@ Each callback returns a String message that comes back from the widget based on 
 | :---------- | :------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `env`       | `string`             | **Required**. Available values: staging, production.                                                                                             |
 | `token`     | `string`             | **Required**. The token generated from the [integration guide](https://api-aeropay.readme.io/docs/aerosync-implementation-guides).                    |
+| `theme`     | `string`             | UI theme for the widget. Available values: `"light"`, `"dark"`. Default: `"light"`.                                                                  |
 | `onEvent`   | `function(response)` | **Required**. This method will be triggered as the user completes the bank link workflow.                                                             |
 | `onLoad`    | `function(response)` | **Required**. Call function after the contents of webpage have been loaded as the user completes the bank link workflow.                              |
 | `onSuccess` | `function(response)` | **Required**. This method will be triggered when a bank is added successfully and the user clicks on "continue" button in the final AeroSync-UI page. |
@@ -101,6 +104,32 @@ Each callback returns a String message that comes back from the widget based on 
 > The largest FIs in the US use oAuth experiences to authenticate their end user's banks for the optimal user experience in a secure manner.
 > 
 > To implement deeplinking using iOS please refer to the official iOS Deeplink guide for Universal Links [here](https://developer.apple.com/ios/universal-links/). URL Scheme method can also be used.
+# Theme Support
+
+The SDK supports both light and dark themes. You can customize the appearance by setting the `theme` parameter:
+
+```swift
+// Light theme (default)
+AerosyncSDK(
+    token: "your-token",
+    env: "sandbox",
+    deeplink: "yourapp://connect",
+    theme: "light",
+    // ... other parameters
+)
+
+// Dark theme
+AerosyncSDK(
+    token: "your-token",
+    env: "sandbox",
+    deeplink: "yourapp://connect",
+    theme: "dark",
+    // ... other parameters
+)
+```
+
+If no theme is specified, the widget defaults to light theme.
+
 # Store Connected Account
 Store onSuccess() callback return to authenticate with the Aerosync API to retrieve account information.
 ```json

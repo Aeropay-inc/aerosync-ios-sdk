@@ -1,6 +1,3 @@
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
-
 import SwiftUI
 import WebKit
 
@@ -13,11 +10,12 @@ var environments = ["dev": "https://qa-sync.aero.inc",
 @available(iOS 14.0, *)
 public struct AerosyncSDK: UIViewRepresentable{
     @State fileprivate var shouldDismiss = false
-    
+
     var token: String
     var env: String
     var deeplink: String
     var consumerId: String?
+    var theme: String
     var onEvent : (Any) -> ()
     var onSuccess : (String) -> ()
     var onClose : (Any) -> ()
@@ -27,12 +25,13 @@ public struct AerosyncSDK: UIViewRepresentable{
     var userId: String?
     var jobId: String?
     
-    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, consumerId: String? = nil, onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void, handleMFA: Bool = false, jobId: String? = "", userId: String? = "") {
+    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, consumerId: String? = nil, theme: String = "light", onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void, handleMFA: Bool = false, jobId: String? = "", userId: String? = "") {
         self.shouldDismiss = shouldDismiss
         self.token = token
         self.env = env
         self.deeplink = deeplink
         self.consumerId = consumerId
+        self.theme = theme
         self.onEvent = onEvent
         self.onSuccess = onSuccess
         self.onClose = onClose
@@ -63,6 +62,7 @@ public struct AerosyncSDK: UIViewRepresentable{
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onEvent")
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onError")
         webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onSuccess")
+
         context.coordinator.webView = webView
 
         // SETUP GESTURE RECOGNIZER
@@ -80,10 +80,11 @@ public struct AerosyncSDK: UIViewRepresentable{
         webView.allowsBackForwardNavigationGestures = true
         
         let url = URL(string: """
-            \(environments[env]!)?token=\(token)&deeplink=\(deeplink)\
+            \(environments[env]!)?token=\(token)&deeplink=\(deeplink)&defaultTheme=\(theme)\
             \(consumerId != nil ? "&consumerId=\(consumerId!)" : "")\
             \(handleMFA != false ? "&handleMFA=\(handleMFA)&userID=\(userId!)&jobId=\(jobId!)" : "")
             """)
+
         let request = URLRequest(url: url!)
         webView.load(request)
         return webView
@@ -130,19 +131,26 @@ public struct AerosyncSDK: UIViewRepresentable{
         }
         
         public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-            if message.name == "onError", let messageBody = message.body as? String {
-                wrapper.onError(messageBody)
-            }
-            if message.name == "onEvent", let messageBody = message.body as? String {
-                wrapper.onEvent(messageBody)
-            }
-            if message.name == "onSuccess", let messageBody = message.body as? String {
-                wrapper.shouldDismiss = true
-                wrapper.onSuccess(messageBody)
-            }
-            if message.name == "onClose", let messageBody = message.body as? Any {
-                wrapper.shouldDismiss = true
-                wrapper.onClose("Closed")
+            switch message.name {
+                case "onError":
+                    wrapper.onError(message.body)
+                case "onBankClick":
+                    wrapper.onEvent(message.body)
+                case "onEvent":
+                    print("onEvent: \(message.body)")
+                    wrapper.onEvent(message.body)
+                case "onSuccess":
+                    wrapper.shouldDismiss = true
+                    if let body = message.body as? String {
+                        wrapper.onSuccess(body)
+                    } else {
+                        wrapper.onSuccess("\(message.body)")
+                    }
+                case "onClose":
+                    wrapper.shouldDismiss = true
+                    wrapper.onClose("Closed")
+                default:
+                    print("Unhandled event type: \(message.name)")
             }
         }
         
