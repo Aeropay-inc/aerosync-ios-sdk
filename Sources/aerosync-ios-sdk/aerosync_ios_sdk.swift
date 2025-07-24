@@ -78,7 +78,7 @@ public struct AerosyncSDK: UIViewRepresentable{
         
         webView.isUserInteractionEnabled = true
         webView.allowsBackForwardNavigationGestures = true
-        
+
         let url = URL(string: """
             \(environments[env]!)?token=\(token)&deeplink=\(deeplink)&defaultTheme=\(theme)\
             \(consumerId != nil ? "&consumerId=\(consumerId!)" : "")\
@@ -134,10 +134,7 @@ public struct AerosyncSDK: UIViewRepresentable{
             switch message.name {
                 case "onError":
                     wrapper.onError(message.body)
-                case "onBankClick":
-                    wrapper.onEvent(message.body)
                 case "onEvent":
-                    print("onEvent: \(message.body)")
                     wrapper.onEvent(message.body)
                 case "onSuccess":
                     wrapper.shouldDismiss = true
@@ -150,7 +147,7 @@ public struct AerosyncSDK: UIViewRepresentable{
                     wrapper.shouldDismiss = true
                     wrapper.onClose("Closed")
                 default:
-                    print("Unhandled event type: \(message.name)")
+                    break
             }
         }
         
