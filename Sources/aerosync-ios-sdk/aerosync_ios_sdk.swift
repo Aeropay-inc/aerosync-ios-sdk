@@ -50,20 +50,16 @@ public struct AerosyncSDK: UIViewRepresentable{
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
-        // inject JS to capture console.log output and send to iOS
-        let source = "function captureLog(msg) { window.webkit.messageHandlers.logHandler.postMessage(msg); } window.console.log = captureLog;"
-        let script = WKUserScript(source: source, injectionTime: .atDocumentEnd, forMainFrameOnly: false)
-        webView.configuration.userContentController.addUserScript(script)
-        
-        // register the bridge script that listens for the output
         webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
-        webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onClose")
-        webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "logHandler")
-        webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onEvent")
-        webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onError")
-        webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onSuccess")
 
-        context.coordinator.webView = webView
+        // Use context.coordinator instead of creating new instances
+        let coordinator = context.coordinator
+        webView.configuration.userContentController.add(coordinator, name: "onClose")
+        webView.configuration.userContentController.add(coordinator, name: "onEvent")
+        webView.configuration.userContentController.add(coordinator, name: "onError")
+        webView.configuration.userContentController.add(coordinator, name: "onSuccess")
+
+        coordinator.webView = webView
 
         // SETUP GESTURE RECOGNIZER
         let gestureRecognizerBack = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(context.coordinator.handleBack))
@@ -158,6 +154,7 @@ public struct AerosyncSDK: UIViewRepresentable{
         public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             wrapper.onLoad("\(webView.url!)")
             let triggerEventScript = """
+                window.iOSReady = true;
                 var event = new CustomEvent('iOSReady', { detail: 'iOS Ready' });
                 window.dispatchEvent(event);
             """
