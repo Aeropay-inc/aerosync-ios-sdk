@@ -63,6 +63,7 @@ public struct AerosyncSDK: UIViewRepresentable{
         webView.configuration.userContentController.add(coordinator, name: "onEvent")
         webView.configuration.userContentController.add(coordinator, name: "onError")
         webView.configuration.userContentController.add(coordinator, name: "onSuccess")
+        webView.configuration.userContentController.add(Coordinator(wrapper: self), name: "onBankClick")
 
         coordinator.webView = webView
 
