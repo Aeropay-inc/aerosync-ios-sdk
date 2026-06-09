@@ -1,9 +1,7 @@
 import SwiftUI
 import WebKit
 
-var environments = ["dev": "https://qa-sync.aero.inc",
-                    "sandbox": "https://sandbox.aerosync.com",
-                    "staging": "https://staging-sync.aero.inc",
+var environments = ["sandbox": "https://sandbox.aerosync.com",
                     "production": "https://sync.aero.inc"]
 
 #if os(iOS)
@@ -56,7 +54,6 @@ public struct AerosyncSDK: UIViewRepresentable{
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
-        // Use context.coordinator instead of creating new instances
         let coordinator = context.coordinator
         webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
         webView.configuration.userContentController.add(coordinator, name: "onClose")
@@ -67,7 +64,6 @@ public struct AerosyncSDK: UIViewRepresentable{
 
         coordinator.webView = webView
 
-        // SETUP GESTURE RECOGNIZER
         let gestureRecognizerBack = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(context.coordinator.handleBack))
         gestureRecognizerBack.direction = .right // back navigation
         gestureRecognizerBack.delegate = context.coordinator
@@ -81,7 +77,6 @@ public struct AerosyncSDK: UIViewRepresentable{
         webView.isUserInteractionEnabled = true
         webView.allowsBackForwardNavigationGestures = true
         
-        // Build URL components properly with encoding
         var components = URLComponents(string: environments[env]!)!
         var queryItems: [URLQueryItem] = [
             URLQueryItem(name: "token", value: token),
@@ -120,8 +115,6 @@ public struct AerosyncSDK: UIViewRepresentable{
         guard let url = components.url else {
             return webView
         }
-        print("Loading Widget URL: \(url)")
-
         let request = URLRequest(url: url)
         webView.load(request)
         return webView
@@ -174,7 +167,6 @@ public struct AerosyncSDK: UIViewRepresentable{
                 case "onBankClick":
                     wrapper.onEvent(message.body)
                 case "onEvent":
-                    print("onEvent: \(message.body)")
                     wrapper.onEvent(message.body)
                 case "onSuccess":
                     wrapper.shouldDismiss = true
@@ -187,7 +179,7 @@ public struct AerosyncSDK: UIViewRepresentable{
                     wrapper.shouldDismiss = true
                     wrapper.onClose("Closed")
                 default:
-                    print("Unhandled event type: \(message.name)")
+                    break
             }
         }
         
@@ -202,13 +194,7 @@ public struct AerosyncSDK: UIViewRepresentable{
                 var event = new CustomEvent('iOSReady', { detail: 'iOS Ready' });
                 window.dispatchEvent(event);
             """
-            webView.evaluateJavaScript(triggerEventScript) { (result, error) in
-                if let error = error {
-                    print("Error triggering event: \(error)")
-                } else {
-                    print("Event triggered successfully")
-                }
-            }
+            webView.evaluateJavaScript(triggerEventScript)
         }
         
         public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
