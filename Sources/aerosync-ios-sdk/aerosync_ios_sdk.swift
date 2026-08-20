@@ -1,9 +1,7 @@
 import SwiftUI
 import WebKit
 
-var environments = ["dev": "https://qa-sync.aero.inc",
-                    "sandbox": "https://sandbox.aerosync.com",
-                    "staging": "https://staging-sync.aero.inc",
+var environments = ["sandbox": "https://sandbox-sync.aero.inc",
                     "production": "https://sync.aero.inc"]
 
 #if os(iOS)
@@ -14,32 +12,38 @@ public struct AerosyncSDK: UIViewRepresentable{
     var token: String
     var env: String
     var deeplink: String
-    var consumerId: String?
+    var configurationId: String?
+    var aeroPassUserUuid: String
+    var stateCode: String?
     var theme: String
+    var manualLinkOnly: Bool
+    var handleMFA : Bool
+    var jobId: String?
+    var connectionId: String?
     var onEvent : (Any) -> ()
     var onSuccess : (String) -> ()
     var onClose : (Any) -> ()
     var onLoad : (Any) -> ()
     var onError : (Any) -> ()
-    var handleMFA : Bool
-    var userId: String?
-    var jobId: String?
     
-    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, consumerId: String? = nil, theme: String = "light", onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void, handleMFA: Bool = false, jobId: String? = "", userId: String? = "") {
+    public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, aeroPassUserUuid: String, configurationId: String? = nil, stateCode: String? = nil, theme: String = "light", manualLinkOnly: Bool = false, handleMFA: Bool = false, jobId: String? = "", connectionId: String? = "", onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void) {
         self.shouldDismiss = shouldDismiss
         self.token = token
         self.env = env
         self.deeplink = deeplink
-        self.consumerId = consumerId
+        self.configurationId = configurationId
+        self.aeroPassUserUuid = aeroPassUserUuid
+        self.stateCode = stateCode
         self.theme = theme
+        self.manualLinkOnly = manualLinkOnly
+        self.handleMFA = handleMFA
+        self.jobId = jobId
+        self.connectionId = connectionId
         self.onEvent = onEvent
         self.onSuccess = onSuccess
         self.onClose = onClose
         self.onLoad = onLoad
         self.onError = onError
-        self.handleMFA = handleMFA
-        self.jobId = jobId
-        self.userId = userId
     }
     
     public func makeUIView(context: Context) -> WKWebView {
@@ -50,10 +54,8 @@ public struct AerosyncSDK: UIViewRepresentable{
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
-        webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
-
-        // Use context.coordinator instead of creating new instances
         let coordinator = context.coordinator
+        webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
         webView.configuration.userContentController.add(coordinator, name: "onClose")
         webView.configuration.userContentController.add(coordinator, name: "onEvent")
         webView.configuration.userContentController.add(coordinator, name: "onError")
@@ -61,7 +63,6 @@ public struct AerosyncSDK: UIViewRepresentable{
 
         coordinator.webView = webView
 
-        // SETUP GESTURE RECOGNIZER
         let gestureRecognizerBack = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(context.coordinator.handleBack))
         gestureRecognizerBack.direction = .right // back navigation
         gestureRecognizerBack.delegate = context.coordinator
@@ -74,14 +75,46 @@ public struct AerosyncSDK: UIViewRepresentable{
         
         webView.isUserInteractionEnabled = true
         webView.allowsBackForwardNavigationGestures = true
+        
+        var components = URLComponents(string: environments[env]!)!
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "token", value: token),
+            URLQueryItem(name: "deeplink", value: deeplink),
+            URLQueryItem(name: "version", value: "2.0.0")
+        ]
 
-        let url = URL(string: """
-            \(environments[env]!)?token=\(token)&deeplink=\(deeplink)&defaultTheme=\(theme)\
-            \(consumerId != nil ? "&consumerId=\(consumerId!)" : "")\
-            \(handleMFA != false ? "&handleMFA=\(handleMFA)&userID=\(userId!)&jobId=\(jobId!)" : "")
-            """)
+        if let configId = configurationId {
+            queryItems.append(URLQueryItem(name: "configurationId", value: configId))
+        }
 
-        let request = URLRequest(url: url!)
+        queryItems.append(URLQueryItem(name: "aeroPassUserUuid", value: aeroPassUserUuid))
+
+        if let stateCodeValue = stateCode {
+            queryItems.append(URLQueryItem(name: "stateCode", value: stateCodeValue))
+        }
+
+        queryItems.append(URLQueryItem(name: "defaultTheme", value: theme))
+
+        if manualLinkOnly {
+            queryItems.append(URLQueryItem(name: "manualLinkOnly", value: "true"))
+        }
+
+        if handleMFA {
+            queryItems.append(URLQueryItem(name: "handleMFA", value: "true"))
+            if let connId = connectionId {
+                queryItems.append(URLQueryItem(name: "connectionId", value: connId))
+            }
+            if let jId = jobId {
+                queryItems.append(URLQueryItem(name: "jobId", value: jId))
+            }
+        }
+
+        components.queryItems = queryItems
+
+        guard let url = components.url else {
+            return webView
+        }
+        let request = URLRequest(url: url)
         webView.load(request)
         return webView
     }
@@ -158,13 +191,7 @@ public struct AerosyncSDK: UIViewRepresentable{
                 var event = new CustomEvent('iOSReady', { detail: 'iOS Ready' });
                 window.dispatchEvent(event);
             """
-            webView.evaluateJavaScript(triggerEventScript) { (result, error) in
-                if let error = error {
-                    print("Error triggering event: \(error)")
-                } else {
-                    print("Event triggered successfully")
-                }
-            }
+            webView.evaluateJavaScript(triggerEventScript)
         }
         
         public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
