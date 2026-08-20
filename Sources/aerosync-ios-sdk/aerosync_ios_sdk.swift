@@ -8,7 +8,7 @@ var environments = ["sandbox": "https://sandbox.aerosync.com",
 @available(iOS 14.0, *)
 public struct AerosyncSDK: UIViewRepresentable{
     @State fileprivate var shouldDismiss = false
-    
+
     var token: String
     var env: String
     var deeplink: String
