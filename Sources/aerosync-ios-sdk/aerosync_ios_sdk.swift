@@ -1,7 +1,7 @@
 import SwiftUI
 import WebKit
 
-var environments = ["sandbox": "https://sandbox.aerosync.com",
+var environments = ["sandbox": "https://sandbox-sync.aero.inc",
                     "production": "https://sync.aero.inc"]
 
 #if os(iOS)
@@ -60,7 +60,6 @@ public struct AerosyncSDK: UIViewRepresentable{
         webView.configuration.userContentController.add(coordinator, name: "onEvent")
         webView.configuration.userContentController.add(coordinator, name: "onError")
         webView.configuration.userContentController.add(coordinator, name: "onSuccess")
-        webView.configuration.userContentController.add(coordinator, name: "onBankClick")
 
         coordinator.webView = webView
 
@@ -164,8 +163,6 @@ public struct AerosyncSDK: UIViewRepresentable{
             switch message.name {
                 case "onError":
                     wrapper.onError(message.body)
-                case "onBankClick":
-                    wrapper.onEvent(message.body)
                 case "onEvent":
                     wrapper.onEvent(message.body)
                 case "onSuccess":
