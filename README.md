@@ -286,7 +286,7 @@ struct ContentView: View {
 
 | Callback | Signature | Description |
 |----------|-----------|-------------|
-| `onSuccess` | `(String) -> Void` | Bank connection completed — receives a JSON string with credentials |
+| `onSuccess` | `(String) -> Void` | Bank connection completed — receives a JSON string (single account, or multiple accounts when the merchant's configuration has multi-account linking enabled; see [Success Response](#success-response)) |
 | `onClose` | `(Any) -> Void` | User dismissed the widget |
 | `onEvent` | `(Any) -> Void` | Widget page events and navigation signals |
 | `onError` | `(Any) -> Void` | An error occurred during the flow |
@@ -296,21 +296,52 @@ struct ContentView: View {
 
 ## Success Response
 
-The `onSuccess` callback receives a JSON string. Parse it to extract the credentials needed to authenticate with the AeroSync API:
+The `onSuccess` callback receives a JSON string:
 
 ```json
 {
   "type": "pageSuccess",
   "payload": {
-    "user_id": "a08905dae1d74c9ea021d325d8de654f",
-    "user_password": "7f9946f5e2e34f61a59f2f3c00535118",
-    "ClientName": "Aeropay",
-    "FILoginAcctId": 113786059
+    "connectionId": "33e1121dde934c5cb5b964b325e28728",
+    "aeroPassUserUuid": "b120bcb5-2f39-48d3-a654-1c437c1ec175",
+    "clientName": "Aeropay"
   }
 }
 ```
 
-**Parsing example:**
+If your AeroSync configuration has **multi-account linking** enabled, the same event instead carries a list of linked accounts:
+
+```json
+{
+  "type": "pageSuccess",
+  "payload": {
+    "accounts": [
+      { "connectionId": "33e1121dde934c5cb5b964b325e28728", "accountType": "checking", "accountNumberDisplay": "••••1234" },
+      { "connectionId": "84f2232eef045d6dc6a075436f39839", "accountType": "savings", "accountNumberDisplay": "••••5678" }
+    ],
+    "clientName": "Aeropay",
+    "aeroPassUserUuid": "b120bcb5-2f39-48d3-a654-1c437c1ec175"
+  }
+}
+```
+
+**Parsing with the typed models:**
+
+```swift
+onSuccess: { message in
+    guard let result = AerosyncSuccessPayload.parse(from: message) else { return }
+    switch result {
+    case .multiAccount(let payload):
+        for account in payload.accounts {
+            print("\(account.accountType): \(account.accountNumberDisplay)")
+        }
+    case .singleAccount(let payload):
+        print("Connected: \(payload.connectionId)")
+    }
+}
+```
+
+**Manual parsing example** (if you'd rather not use the typed models):
 
 ```swift
 onSuccess: { data in
@@ -318,9 +349,12 @@ onSuccess: { data in
           let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
           let payload = json["payload"] as? [String: Any] else { return }
 
-    let userId = payload["user_id"] as? String
-    let userPassword = payload["user_password"] as? String
-    // Use these to authenticate with the AeroSync API
+    if let accounts = payload["accounts"] as? [[String: Any]] {
+        // Multi-account: each entry has connectionId, accountType, accountNumberDisplay
+    } else {
+        let connectionId = payload["connectionId"] as? String
+        // Use this to authenticate with the AeroSync API
+    }
 }
 ```
 

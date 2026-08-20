@@ -1,3 +1,7 @@
+## [2.2.0]
+### Added
+- Typed success models — `AerosyncSingleAccountSuccessPayload`, `AerosyncLinkedAccount`, `AerosyncMultiAccountSuccessPayload`, and the `AerosyncSuccessPayload` enum, in `AerosyncSuccessModels.swift`. Call `AerosyncSuccessPayload.parse(from:)` inside your `onSuccess` closure to parse the raw JSON string into a `.multiAccount` case (returned when the merchant's AeroSync configuration has multi-account linking enabled) or a `.singleAccount` case (the default) — switch on the enum to narrow. This is purely additive: `onSuccess` keeps its existing `(String) -> Void` signature, so no existing integration needs to change.
+
 ## [2.1.0]
 ### Removed
 - `AerosyncEmbeddedView` has been removed and will be re-introduced in a future release
