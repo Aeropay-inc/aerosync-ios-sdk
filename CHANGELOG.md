@@ -1,3 +1,7 @@
+## [2.3.0]
+### Fixed
+- Fixed a build failure under Xcode 27 (`'self' used before all stored properties are initialized`). No API or behavior change, no code changes needed on your side.
+
 ## [2.2.1]
 ### Fixed
 - The `sandbox` environment now points to `https://sandbox-sync.aero.inc` (previously `https://sandbox.aerosync.com`). If you allowlist AeroSync domains in a firewall or CSP policy, update it to the new host.
