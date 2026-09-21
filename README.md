@@ -3,7 +3,7 @@
 [![Swift](https://img.shields.io/badge/Swift-5.3+-orange.svg)](https://swift.org)
 [![Platform](https://img.shields.io/badge/platform-iOS%2014%2B-blue.svg)](https://developer.apple.com/ios/)
 [![SPM](https://img.shields.io/badge/Swift%20Package%20Manager-compatible-brightgreen.svg)](https://swift.org/package-manager/)
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/Aeropay-inc/aerosync-ios-sdk/releases)
+[![Version](https://img.shields.io/badge/version-2.3.0-blue.svg)](https://github.com/Aeropay-inc/aerosync-ios-sdk/releases)
 
 A native iOS SDK for secure bank account linking. Built with SwiftUI and WKWebView, it lets users connect their bank accounts through fast, tokenized connections — with full OAuth and MFA support.
 
@@ -56,13 +56,13 @@ A native iOS SDK for secure bank account linking. Built with SwiftUI and WKWebVi
 https://github.com/Aeropay-inc/aerosync-ios-sdk
 ```
 
-Select version **2.1.0** or later, then click **Add Package**.
+Select version **2.3.0** or later, then click **Add Package**.
 
 **Or via `Package.swift`:**
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Aeropay-inc/aerosync-ios-sdk", from: "2.1.0")
+    .package(url: "https://github.com/Aeropay-inc/aerosync-ios-sdk", from: "2.3.0")
 ]
 ```
 
