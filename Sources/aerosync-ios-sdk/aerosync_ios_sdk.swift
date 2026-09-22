@@ -26,7 +26,7 @@ public struct AerosyncSDK: UIViewRepresentable{
     var jobId: String?
     
     public init(shouldDismiss: Bool = false, token: String, env: String, deeplink: String, consumerId: String? = nil, theme: String = "light", onEvent: @escaping (Any) -> Void, onSuccess: @escaping (String) -> Void, onClose: @escaping (Any) -> Void, onLoad: @escaping (Any) -> Void, onError: @escaping (Any) -> Void, handleMFA: Bool = false, jobId: String? = "", userId: String? = "") {
-        self.shouldDismiss = shouldDismiss
+        self._shouldDismiss = State(initialValue: shouldDismiss)
         self.token = token
         self.env = env
         self.deeplink = deeplink

@@ -2,6 +2,9 @@
 
 All notable changes to the AeroSync iOS SDK will be documented in this file.
 
+## Release 1.3.0
+* Fixed a build failure under Xcode 27 (`'self' used before all stored properties are initialized`). No API or behavior change, no code changes needed on your side.
+
 ## Release 1.2.0
 * Added `theme` parameter to customize widget appearance
 * Support for light and dark themes ('light', 'dark')
