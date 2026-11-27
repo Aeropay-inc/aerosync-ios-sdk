@@ -16,6 +16,10 @@ let package = Package(
         .target(
             name: "aerosync-ios-sdk",
             dependencies: []
+        ),
+        .testTarget(
+            name: "aerosync-ios-sdkTests",
+            dependencies: ["aerosync-ios-sdk"]
         )
     ]
 )

@@ -7,11 +7,62 @@ public struct AerosyncLinkedAccount: Decodable {
     public let accountNumberDisplay: String
 }
 
+/// Result of the bank-owner name check, sent in `onSuccess` when the
+/// merchant has name matching enabled.
+///
+/// Values:
+/// - ``match``: the bank account owner's name matches the user.
+/// - ``review``: a partial match (for example a nickname or only the last
+///   name). The link went through; you may want to review it.
+/// - ``notApplicable``: the names couldn't be compared (for example a
+///   business account, or no owner name from the bank). The link went through.
+/// - ``unknown(_:)``: a value this SDK version doesn't know yet. New values
+///   never make parsing fail.
+///
+/// A mismatch is never a success: the widget shows a mismatch screen and
+/// `onError` receives `NAME_MISMATCH` / `AC-166` instead.
+public enum AerosyncMatchIndicator: Equatable, Hashable, Decodable {
+    case match
+    case review
+    case notApplicable
+    case unknown(String)
+
+    public init(rawValue: String) {
+        switch rawValue {
+        case "MATCH": self = .match
+        case "REVIEW": self = .review
+        case "NOT_APPLICABLE": self = .notApplicable
+        default: self = .unknown(rawValue)
+        }
+    }
+
+    /// The value as sent by the widget, e.g. `"MATCH"`.
+    public var rawValue: String {
+        switch self {
+        case .match: return "MATCH"
+        case .review: return "REVIEW"
+        case .notApplicable: return "NOT_APPLICABLE"
+        case .unknown(let value): return value
+        }
+    }
+
+    /// Never throws: a non-string value decodes as `.unknown("")`, so an
+    /// unexpected `matchIndicator` can't make the whole payload fail to parse.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        self.init(rawValue: (try? container.decode(String.self)) ?? "")
+    }
+}
+
 /// Single-account success payload (default / AeroPass returning user).
 public struct AerosyncSingleAccountSuccessPayload: Decodable {
     public let connectionId: String
     public let clientName: String
     public let aeroPassUserUuid: String
+    /// Name-check result. `nil` when the check didn't run: name matching is
+    /// off for the merchant, a reconnect, or a returning AeroPass user who
+    /// picked a saved bank.
+    public let matchIndicator: AerosyncMatchIndicator?
 }
 
 /// Multi-account success payload — returned instead of
@@ -21,6 +72,9 @@ public struct AerosyncMultiAccountSuccessPayload: Decodable {
     public let accounts: [AerosyncLinkedAccount]
     public let clientName: String
     public let aeroPassUserUuid: String
+    /// Name-check result for the whole link (one value next to `accounts`,
+    /// never per account). `nil` when the check didn't run.
+    public let matchIndicator: AerosyncMatchIndicator?
 }
 
 /// Typed result for the JSON string delivered to ``AerosyncSDK``'s `onSuccess`
@@ -60,6 +114,15 @@ public enum AerosyncSuccessPayload {
         switch self {
         case .singleAccount(let payload): return payload.aeroPassUserUuid
         case .multiAccount(let payload): return payload.aeroPassUserUuid
+        }
+    }
+
+    /// Name-check result, from either payload shape. `nil` when the check
+    /// didn't run.
+    public var matchIndicator: AerosyncMatchIndicator? {
+        switch self {
+        case .singleAccount(let payload): return payload.matchIndicator
+        case .multiAccount(let payload): return payload.matchIndicator
         }
     }
 
