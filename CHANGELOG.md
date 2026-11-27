@@ -1,3 +1,9 @@
+## [2.4.0]
+### Added
+- `matchIndicator` on the typed success models. `AerosyncSingleAccountSuccessPayload` and `AerosyncMultiAccountSuccessPayload` gain an optional `matchIndicator: AerosyncMatchIndicator?` (`.match`, `.review`, `.notApplicable`, or `.unknown(String)` for values this version doesn't know), and `AerosyncSuccessPayload.matchIndicator` reads it from either shape. It is present when name matching is enabled for your merchant account, and `nil` otherwise. Payloads without the field parse as before.
+- `AerosyncWidgetError.parse(from:)`, an opt-in helper that turns the `onError` body into `type`, `code`, `message` and `raw`, plus `isNameMismatch`. `onError` keeps its `(Any) -> Void` signature.
+- Documented the `NAME_MISMATCH` / `AC-166` error: the bank account owner isn't the user, so nothing is linked and `onSuccess` isn't called. See "Error Response" in the README.
+
 ## [2.3.0]
 ### Fixed
 - Fixed a build failure under Xcode 27 (`'self' used before all stored properties are initialized`). No API or behavior change, no code changes needed on your side.

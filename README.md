@@ -3,7 +3,7 @@
 [![Swift](https://img.shields.io/badge/Swift-5.3+-orange.svg)](https://swift.org)
 [![Platform](https://img.shields.io/badge/platform-iOS%2014%2B-blue.svg)](https://developer.apple.com/ios/)
 [![SPM](https://img.shields.io/badge/Swift%20Package%20Manager-compatible-brightgreen.svg)](https://swift.org/package-manager/)
-[![Version](https://img.shields.io/badge/version-2.3.0-blue.svg)](https://github.com/Aeropay-inc/aerosync-ios-sdk/releases)
+[![Version](https://img.shields.io/badge/version-2.4.0-blue.svg)](https://github.com/Aeropay-inc/aerosync-ios-sdk/releases)
 
 A native iOS SDK for secure bank account linking. Built with SwiftUI and WKWebView, it lets users connect their bank accounts through fast, tokenized connections — with full OAuth and MFA support.
 
@@ -19,6 +19,7 @@ A native iOS SDK for secure bank account linking. Built with SwiftUI and WKWebVi
 - [Usage](#usage)
 - [API Reference](#api-reference)
 - [Success Response](#success-response)
+- [Error Response](#error-response)
 - [Troubleshooting](#troubleshooting)
 - [Migration from 1.x](#migration-from-1x-to-2x)
 - [License](#license)
@@ -56,13 +57,13 @@ A native iOS SDK for secure bank account linking. Built with SwiftUI and WKWebVi
 https://github.com/Aeropay-inc/aerosync-ios-sdk
 ```
 
-Select version **2.3.0** or later, then click **Add Package**.
+Select version **2.4.0** or later, then click **Add Package**.
 
 **Or via `Package.swift`:**
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Aeropay-inc/aerosync-ios-sdk", from: "2.3.0")
+    .package(url: "https://github.com/Aeropay-inc/aerosync-ios-sdk", from: "2.4.0")
 ]
 ```
 
@@ -289,7 +290,7 @@ struct ContentView: View {
 | `onSuccess` | `(String) -> Void` | Bank connection completed — receives a JSON string (single account, or multiple accounts when the merchant's configuration has multi-account linking enabled; see [Success Response](#success-response)) |
 | `onClose` | `(Any) -> Void` | User dismissed the widget |
 | `onEvent` | `(Any) -> Void` | Widget page events and navigation signals |
-| `onError` | `(Any) -> Void` | An error occurred during the flow |
+| `onError` | `(Any) -> Void` | An error occurred during the flow — receives a JSON string; see [Error Response](#error-response) |
 | `onLoad` | `(Any) -> Void` | Widget finished loading |
 
 ---
@@ -325,6 +326,32 @@ If your AeroSync configuration has **multi-account linking** enabled, the same e
 }
 ```
 
+### Name match result (`matchIndicator`)
+
+When name matching is enabled for your merchant account, AeroSync checks that the bank account owner is the user, and the success payload carries an optional `matchIndicator`. It sits next to `connectionId` for a single account, and next to `accounts` (one value for the whole link, never per account) for multi-account:
+
+```json
+{
+  "type": "pageSuccess",
+  "payload": {
+    "connectionId": "33e1121dde934c5cb5b964b325e28728",
+    "aeroPassUserUuid": "b120bcb5-2f39-48d3-a654-1c437c1ec175",
+    "clientName": "Aeropay",
+    "matchIndicator": "MATCH"
+  }
+}
+```
+
+| Value | Meaning |
+|-------|---------|
+| `MATCH` | The bank account owner's name matches the user. |
+| `REVIEW` | Partial match (for example a nickname, or only the first or last name). The account was linked; you may want to review it. |
+| `NOT_APPLICABLE` | The names couldn't be compared (for example a business account, or the bank returned no owner name). The account was linked. |
+
+- The field is **absent** when the check didn't run: name matching is off for your merchant account, the user reconnected an existing connection, or a returning AeroPass user picked a saved bank.
+- A mismatch is never a success: the account isn't linked, `onSuccess` isn't called, and `onError` receives `NAME_MISMATCH` (see [Error Response](#error-response)).
+- Treat unknown values as `REVIEW`. More values may be added later; the typed models decode them as `.unknown(String)` instead of failing.
+
 **Parsing with the typed models:**
 
 ```swift
@@ -337,6 +364,13 @@ onSuccess: { message in
         }
     case .singleAccount(let payload):
         print("Connected: \(payload.connectionId)")
+    }
+
+    switch result.matchIndicator {
+    case .match?: break                           // owner matches the user
+    case .review?, .unknown?: break               // linked; consider a review
+    case .notApplicable?: break                   // linked; names not compared
+    case nil: break                               // check didn't run
     }
 }
 ```
@@ -355,8 +389,48 @@ onSuccess: { data in
         let connectionId = payload["connectionId"] as? String
         // Use this to authenticate with the AeroSync API
     }
+    let matchIndicator = payload["matchIndicator"] as? String // "MATCH", "REVIEW", "NOT_APPLICABLE" or nil
 }
 ```
+
+---
+
+## Error Response
+
+The `onError` callback receives a JSON string. Its `payload` is a single string with the error type, code and message:
+
+```json
+{
+  "type": "widgetError",
+  "payload": "Type: NAME_MISMATCH | Code: AC-166 | Message: For your security, you can only link a bank account that is in your name. ..."
+}
+```
+
+Some errors carry only part of it (for example `Code: <code> | Message: <message>`, or `Error | Message: <message>`).
+
+**Parsing with the typed helper** (opt-in; `onError` keeps its `(Any) -> Void` signature):
+
+```swift
+onError: { body in
+    guard let error = AerosyncWidgetError.parse(from: body) else { return }
+    if error.isNameMismatch {
+        // The bank account owner isn't the user. Nothing was linked.
+    } else {
+        print("Error \(error.code ?? "-"): \(error.message ?? error.raw)")
+    }
+}
+```
+
+`AerosyncWidgetError` exposes `type`, `code` and `message` (each optional), `raw` (the full error string) and `isNameMismatch`.
+
+### Name mismatch (`NAME_MISMATCH` / `AC-166`)
+
+Sent when name matching is enabled for your merchant account and the bank account owner isn't the user, for both bank login and manual (routing and account number) linking.
+
+- The account is **not linked**: no `connectionId` is returned and `onSuccess` isn't called.
+- The widget shows its own screen telling the user they can only link an account in their name, and lets them try again with another account. You don't need to show your own error UI; the widget stays open.
+- The `Message` is the widget's on-screen copy and may change. Match on the type or code, not on the message.
+- The error never includes the bank account owner's name.
 
 ---
 
